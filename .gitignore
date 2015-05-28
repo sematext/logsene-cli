@@ -1,6 +1,12 @@
+## OS
+.DS_Store
+
 # Logs
 logs
 *.log
+
+# Editors
+.idea
 
 # Runtime data
 pids

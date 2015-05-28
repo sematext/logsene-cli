@@ -1,0 +1,46 @@
+{
+  "name": "logsene-cli",
+  "version": "0.1.18",
+  "description": "Logsene command-line interface",
+  "main": "index.js",
+  "preferGlobal": true,
+  "scripts": {
+    "test": "echo \"No test specified\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sematext/logsene-cli.git"
+  },
+  "keywords": [
+    "monitoring",
+    "alerting",
+    "log management",
+    "sematext",
+    "logsene",
+    "spm"
+  ],
+  "author": "Marko Bonaći",
+  "license": "Apache v2.0",
+  "bugs": {
+    "url": "https://github.com/sematext/logsene-cli/issues"
+  },
+  "homepage": "https://github.com/sematext/logsene-cli",
+  "dependencies": {
+    "asking": "^0.1.2",
+    "config-file": "^0.1.8",
+    "config-file-nodash": "^0.1.0",
+    "elasticsearch": "^4.1.0",
+    "elasticsearch-streams": "0.0.9",
+    "extend-object": "^1.0.0",
+    "graceful-fs": "^3.0.7",
+    "minimist": "^1.1.1",
+    "request": "^2.55.0",
+    "ronin": "^0.1.2",
+    "simple-spinner": "0.0.3",
+    "touch": "0.0.3",
+    "user-home": "^1.1.1"
+  },
+  "bin": {
+    "logsene": "./bin/logsene-cli"
+  }
+}
