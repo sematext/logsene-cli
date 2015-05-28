@@ -1,3 +1,5 @@
+'use strict';
+
 var Command = require('ronin').Command,
     argv    = require('minimist')(process.argv.slice(2)),
     fs      = require('graceful-fs'),
@@ -6,7 +8,7 @@ var Command = require('ronin').Command,
 
 
 
-var Set = Command.extend({ use: ['auth'],
+var Set = Command.extend({ //use: ['auth'],
   desc: 'Set client\'s configuration parameter',
 
   run: function () {

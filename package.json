@@ -33,6 +33,7 @@
     "elasticsearch-streams": "0.0.9",
     "extend-object": "^1.0.0",
     "graceful-fs": "^3.0.7",
+    "jsonfile": "^2.0.1",
     "minimist": "^1.1.1",
     "request": "^2.55.0",
     "ronin": "^0.1.2",

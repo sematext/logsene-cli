@@ -1,3 +1,5 @@
+'use strict';
+
 var ronin = require('ronin');
 
 var program = ronin({

@@ -1,4 +1,6 @@
-var config  = require('config-file-nodash'),
+'use strict';
+
+var json    = require('jsonfile'),
     touch   = require('touch'),
     home    = require('user-home'),
     ask     = require('asking').ask,
@@ -6,19 +8,35 @@ var config  = require('config-file-nodash'),
     fs      = require('graceful-fs'),
     path    = require('path');
 
+var apiUri  = 'https://apps.sematext.com/spm-reports/'
+
 module.exports = function (next) {
   // check whether there is api-key in ~/.logsene
   var fullPath = path.join(home, '.logsene');
   touch.sync(fullPath, {atime: true, mtime: true});  // fails if it exists - so OK
 
-  var conf = config.load('.logsene', {});
-  var apiKey = conf['api-key'];
+  try {
+    var conf = json.readFileSync(fullPath);
+  } catch(fileEmptyError) {
+    // JSON.parse requires try, since it's inherently synchronous
+    // so the config file is empty
+
+  }
+
+  var apiKey = conf['api-key'];  // TODO check this
 
   if (!apiKey) {
-    getApiKeyByCredentials(errDummy, function() {
-      //fs.writeFileSync(fullPath, {})  // TODO find better config-json package
+    console.log('no api-key')  // TODO clean
+
+    getApiKeyByCredentials(apiUri, function(err, resp) {
+      if (err) throw err; // TODO
+      console.log('response: ', resp);
+      json.writeFileSync(fullPath, {'api-key': resp.data.apiKey});
     });
   }
+
+  // we should have api-key here
+
 
 
 
@@ -37,7 +55,7 @@ module.exports = function (next) {
  * @param {function} mainCb
  * @api private
  */
-function getApiKeyByCredentials(mainErr, mainCb) {
+function getApiKeyByCredentials(url, mainCb) {
   ask ('Enter your username: ', function (err, user) {
     if (user && user !== '') {
       ask('Enter your password: ', {hidden: true}, function (err1, pass) {
@@ -45,7 +63,9 @@ function getApiKeyByCredentials(mainErr, mainCb) {
 
           request({uri: url, json: true}, function (errReq, response, body) {
             if (!errReq && response.statusCode == 200) {  // are we good?
-              cb(null, body);
+
+              mainCb(null, body);
+
             } else {
               if (response == undefined) {  // we're not good
                 console.log("Something went wrong: ", errReq);

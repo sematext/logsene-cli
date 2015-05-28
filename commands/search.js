@@ -1,3 +1,5 @@
+'use strict';
+
 var Command = require('ronin').Command,
     spinner = require('simple-spinner'),
     argv    = require('minimist')(process.argv.slice(2)),
@@ -7,12 +9,14 @@ var Command = require('ronin').Command,
 spinner.change_sequence(["◓", "◑", "◒", "◐"]);
 
 
-var Search = Command.extend({ use: ['auth'],
+var Search = Command.extend({ //use: ['auth'],
   desc: 'Search Logsene log',
 
   run: function () {
 
-    if (Object.keys(argv).length < 2) {
+    // Object.keys(argv).length < 2
+    if (argv._.length < 2) {
+      console.log(argv);
       console.log(this.help());
     }
 
