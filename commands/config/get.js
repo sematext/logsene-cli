@@ -1,10 +1,11 @@
 'use strict';
 
 var Command = require('ronin').Command,
-    argv    = require('minimist')(process.argv.slice(2)),
+    argv    = require('minimist')(process.argv.slice(2))/*,
     fs      = require('graceful-fs'),
     os      = require('os'),
-    api     = require('../../lib/logsene-api');
+    conf    = require('../../lib/config'),
+    api     = require('../../lib/logsene-api')*/;
 
 
 
