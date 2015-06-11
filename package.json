@@ -5,7 +5,7 @@
   "main": "index.js",
   "preferGlobal": true,
   "scripts": {
-    "test": "echo \"No test specified\" && exit 0"
+    "test": "echo \"No tests yet\" && exit 0"
   },
   "repository": {
     "type": "git",
@@ -29,6 +29,7 @@
     "JSONStream": "^1.0.4",
     "array-pluck": "^1.0.0",
     "asking": "^0.1.2",
+    "async": "^1.2.1",
     "camel-case": "^1.1.2",
     "chalk": "^1.0.0",
     "configstore": "^1.0.0",
@@ -37,6 +38,7 @@
     "end-of-stream": "^1.1.0",
     "event-stream": "^3.3.1",
     "extend-object": "^1.0.0",
+    "generator-ronin": "^0.1.2",
     "graceful-fs": "^3.0.7",
     "hyperquest": "^1.2.0",
     "jsonfile": "^2.0.1",
@@ -52,9 +54,9 @@
     "ronin": "^0.1.2",
     "safe-json-stringify": "^1.0.3",
     "simple-spinner": "0.0.3",
-    "touch": "0.0.3",
     "user-home": "^1.1.1",
-    "verror": "^1.6.0"
+    "verror": "^1.6.0",
+    "yo": ">=1.0.0"
   },
   "bin": {
     "logsene": "./bin/logsene-cli"

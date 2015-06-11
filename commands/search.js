@@ -22,7 +22,7 @@ var Command         = require('ronin').Command,
 //spinner.change_sequence(["◓", "◑", "◒", "◐"]);
 
 
-var Search = Command.extend({ use: ['auth'],
+var Search = Command.extend({ use: ['session', 'auth'],
   desc: 'Search Logsene logs',
 
   run: function _run() {
@@ -43,8 +43,8 @@ var Search = Command.extend({ use: ['auth'],
       q:        argv.q,
       apiKey:   conf.getSync('apiKey'),
       appKey:   conf.getSync('appKey'),
-      size:     argv.size || conf.getSync('defaultSize') || conf.maxHits,
-      offset:   argv.offset || 0,
+      size:     argv.s || conf.getSync('defaultSize') || conf.maxHits,
+      offset:   argv.o || 0,
       logLevel: argv.trace || isStrOrBoolTrue(conf.getSync('trace')) ? 'trace' : 'error'
   }, function(err, esReadableHits) {
       //spinner.stop();
@@ -90,7 +90,7 @@ var Search = Command.extend({ use: ['auth'],
     '\n' +
     '  Examples:\n' +
     '  logsene search --q ERROR --s 50\n' +
-    '      returns at most 50 matches of term ERROR\n' +
+    '      returns at most 50 highest ranked matches of term ERROR\n' +
     '\n' +
     '  logsene search ERROR --s 50\n' +
     '      equivalent to the previous example\n' +

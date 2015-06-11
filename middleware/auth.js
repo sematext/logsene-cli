@@ -28,7 +28,7 @@ var async             = require('async'),
  * The process of authentication writes apiKey in the user's
  * configuration file, located in ~/.config folder.
  * The configuration file name is either SSH tty name,
- * (if the user has SSHd into the box) or logsene-[username]
+ * (if the user has SSHd into the box) or logsene-<username>
  *
  * List of all apps for that API key is retrieved from the
  * API server. In there are both, app names and app keys.
@@ -47,8 +47,8 @@ module.exports = function _auth(next) {
       async.ensureAsync(verifyAppKey)
     ],
     async.ensureAsync(function _finally(err, result) {
-      if (!isNullOrUndefined(err)) {
-        return out.error('Error logging in: ' + stringify(err));
+      if (err) {
+        return out.error('Error logging in ' + (err.message ? err.message : ''));
       }
       if (result) {
         setTimeout(next, 50); // all good - back to command or the next middleware
@@ -99,8 +99,6 @@ function verifyAppKey(apiKey, cb) {
 
   if (isEmpty(apiKey)) {
     return cb(new Error('No API key in APP request.'));
-  } else {
-    out.info('Successfuly logged in.');
   }
 
   // if we find appKey in conf, use it
@@ -266,7 +264,7 @@ function chooseApp(apps, cb) {
  */
 function getApps(apiKey, cb) {
   logsene.getApps(apiKey, function _getAppsCall(err, apps) {
-    if (err) return cb(new VError(err, 'Cannot get application list from the API server.'));
+    if (err) return cb(new VError(err));
     return cb(null, apps);
   });
 }

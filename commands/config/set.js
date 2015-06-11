@@ -12,7 +12,7 @@ var Command     = require('ronin').Command,
     conf        = require('../../lib/config');
 
 
-var Set = Command.extend({ use: ['auth'],
+var Set = Command.extend({ use: ['session', 'auth'],
   desc: 'Set current user\'s configuration parameter(s)',
 
   run: function _run() {
