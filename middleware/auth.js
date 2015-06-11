@@ -22,9 +22,9 @@ var inspect           = require('eyespect').inspector(),  // TODO dev only
  * gets called before every run method of each command.
  *
  * In order to do anything with Logsene CLI, user has to
- * have api-key and appKey.
+ * have apiKey and appKey.
  * We help by allowing user to authenticate with user/pass.
- * The process of authentication writes api-key in the user's
+ * The process of authentication writes apiKey in the user's
  * configuration file, located in ~/.config folder.
  * The configuration file name is either SSH tty name,
  * (if the user has SSHd into the box) or logsene-[username]
@@ -34,29 +34,26 @@ var inspect           = require('eyespect').inspector(),  // TODO dev only
  * We write down both to the local configuration file.
  */
 
-var env = process.env,
-    apiKey,
-    appKey;
-
-spinner.change_sequence(["◓", "◑", "◒", "◐"]);
+var apiKey, appKey;
 
 
 module.exports = function _auth(next) {
-  verifyApiKey(function(apiSuccess) {
-    if (apiSuccess) {       // errors handled in the method
-      verifyAppKey(function(appSuccess) {
-        if (!appSuccess) {  // errors handled in the method
-          out.error('Error verifying application token.');
+  verifyApiKey(function(apiSuccess) {      // errors handled inside the method
+    if (apiSuccess) {
+      verifyAppKey(function(appSuccess) {  // errors handled inside the method
+        if (!appSuccess) {
+          out.error('Unable to verify application token.');
           out.error('Exiting...');
           process.exit(1);
         } else {
           // all good
-          setTimeout(next, 10); // back to command or the next middleware function
+          setTimeout(next, 10); // back to command or the next middleware
         }
       });
     }
   });
 };
+
 
 /**
  * Checks the local config for the API key
@@ -67,31 +64,21 @@ module.exports = function _auth(next) {
  */
 function verifyApiKey(cb) {
 
-  // first try env var, but should never be there (new process)
-  apiKey = env.LOGSENE_API_KEY;  //
-  console.log('API key from env: ', apiKey);                    // TODO clean
-
-  // then try the config file
+  // try the config file
   if (isEmpty(apiKey)) {
-    apiKey = conf.getSync('api-key');
+    apiKey = conf.getSync('apiKey');
   }
 
-  console.log('API key from config: ', apiKey);                 // TODO clean
+  out.trace('Got API key from local config: ', apiKey);
 
   if (isEmpty(apiKey)) {
-    console.log('No API key in local configuration.');          // TODO clean
-
-    // if env and conf file don't deliver, ask the user to login
+    // if conf file doesn't deliver (session timeout?), ask the user to login
     getApiKeyWithCredentials(function(err, logseneApiKey) {
       if (err) return out.error('Unable to get the API KEY: ', err.message);
-      console.log('api key from API: ', logseneApiKey);         // TODO clean
-      conf.setSync('api-key', logseneApiKey);
-      env.LOGSENE_API_KEY = logseneApiKey;  // until this process dies
+      out.trace('API key returned from the API server: ', logseneApiKey);
+      conf.setSync('apiKey', logseneApiKey);
     });
 
-  } else {
-    console.log('API key found in local user configuration.');  // TODO clean
-    env.LOGSENE_API_KEY = apiKey;  // keep it in process-wide env var
   }
 
   return cb(!isEmpty(apiKey));
@@ -101,22 +88,21 @@ function verifyApiKey(cb) {
 /**
  * Verifies whether all required app-related params are present
  * If not, prompts the user to choose an app (upon fetching them from API)
- * and stores the choice (app-key and app-name) in the configuration
+ * and stores the choice (appKey and appName) in the configuration
  * Errors are not propagated back, they are handled in place
  * @param cb
  * @returns {Boolean} success
  */
 function verifyAppKey(cb) {
-  // if we find app-key in conf, use it
-  appKey = conf.getSync('app-key');
-  //appName = conf.getSync('app-name');
+  // if we find appKey in conf, use it
+  appKey = conf.getSync('appKey');
 
   if (!isEmpty(appKey)) {
     out.trace('Got APP key from local config: ' + appKey);
     return cb(true);
 
   } else {
-    // if app-key is not in local config, ask the API server for all Logsene apps
+    // if appKey is not in local config, ask the API server for all Logsene apps
     // then ask the user to choose if more than one app exists
     out.trace('calling getApps API');
     getApps(apiKey, function(err, logseneApps) {
@@ -153,7 +139,7 @@ function verifyAppKey(cb) {
 
 
       if (activeAppsCnt === 0) {
-        out.warn('There are no active Logsene apps for your api-key.\nExiting...');
+        out.warn('There are no active Logsene apps for your apiKey.\nExiting...');
         process.exit(0);
       }
 
@@ -166,14 +152,14 @@ function verifyAppKey(cb) {
           // error handled in chooseApp
           out.trace('Back in chooseApp callback.');
 
-          conf.setSync('app-key', chosenApp.token);
-          conf.setSync('app-name', chosenApp.name);
+          conf.setSync('appKey', chosenApp.token);
+          conf.setSync('appName', chosenApp.name);
           return cb(true);
         });
       } else {
         // there's only one active Logsene app - use it without prompting the user
-        conf.setSync('app-key', apps[0].token);
-        conf.setSync('app-name', apps[0].name);
+        conf.setSync('appKey', apps[0].token);
+        conf.setSync('appName', apps[0].name);
         return cb(true);
       }
     });
