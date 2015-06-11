@@ -3,9 +3,11 @@
 /* global module, process, console, require */
 
 var Command     = require('ronin').Command,
-    argv        = require('minimist')(process.argv.slice(2)),
+    camelCase   = require('camel-case'),
+    argv        = require('../../lib/helpers').argv,
     isEmpty     = require('../../lib/helpers').isEmpty,
     out         = require('../../lib/helpers').out,
+    enableTrace = require('../../lib/helpers').enableTrace,
     warnAndExit = require('../../lib/helpers').warnAndExit,
     conf        = require('../../lib/config');
 
@@ -13,46 +15,56 @@ var Command     = require('ronin').Command,
 var Set = Command.extend({ use: ['auth'],
   desc: 'Set current user\'s configuration parameter(s)',
 
-  run: function() {
-    out.trace('argv: ', argv); // TODO Cleanup
+  run: function _run() {
 
-    if (argv._.length !== 3) {
-      warnAndExit('Too few or too many parameters.\n\n', this);
+    // check explicitly for trace in order to enable it if needed
+    if (argv.hasOwnProperty('trace')) {
+      enableTrace(argv.trace);
+    }
+
+    out.trace('set command: argv: ' + JSON.stringify(argv));
+
+    if (argv._.length < 2) {
+      warnAndExit('Too few parameters!', this);
+    } else if (argv._.length > 2) {
+      warnAndExit('Too many parameters!', this);
     }
 
     if (isEmpty(argv['api-key'])
         && isEmpty(argv['app-key'])
-        && isEmpty(argv['app-name'])) {
-      warnAndExit('No known parameters specified.\n\n', this);
+        && isEmpty(argv['app-name'])
+        && isEmpty(argv['trace'])) {
+      warnAndExit('No known parameters specified.', this);
     }
 
+    var setParam = function _setParam(paramName) {
+      if (!isEmpty(argv[paramName])) {
+        conf.setSync(paramName, argv[paramName]);
+        out.info('Successfuly set ' + paramName + ' to ' + argv[paramName]);
+      }
+    };
+
     // multiple option params allowed in a single command
-    if (isEmpty(argv['api-key'])) {
-      conf.setSync('api-key', argv['api-key']);
-      out.info('Success.')
-    }
-    if (isEmpty(argv['app-key'])) {
-      conf.setSync('app-key', argv['app-key']);
-      out.info('Success.')
-    }
-    if (isEmpty(argv['app-name'])) {
-      conf.setSync('app-name', argv['app-name']);
-      out.info('Success.')
-    }
+    // slightly smelly is that I don't know
+    // with which param the set command was called
+    // so I have to check them all
+    conf.getAvailableParams().forEach(function _forEachParam(param) {
+      setParam(camelCase(param));
+    });
+
 
     process.exit(0); // bail out - that's it
   },
 
   // returns usage help
-  help: function () {
+  help: function _help() {
     return 'Usage: logsene ' + this.name + ' [OPTIONS]\n' +
         '  where OPTIONS may be:\n' +
         '    --api-key <apiKey>\n' +
         '    --app-key <appKey>\n' +
         '    --app-name <appName>\n'+
-        '    --trace\n' +
-        '  \n' +
-        '--------\n';
+        '    --trace <true|false>\n\n' +
+        '--------';
   }
 });
 
