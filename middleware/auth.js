@@ -2,11 +2,12 @@
 /* jshint node:true */
 /* global module, process, console, require */
 
-var inspect           = require('eyespect').inspector(),  // TODO dev only
+var async             = require('async'),
     ask               = require('asking').ask,
     choose            = require('asking').choose,
     spinner           = require('simple-spinner'),
     VError            = require('verror'),
+    stringify         = require('safe-json-stringify'),
     map               = require('lodash.map'),
     pick              = require('lodash.pick'),
     forEach           = require('lodash.foreach'),
@@ -35,23 +36,27 @@ var inspect           = require('eyespect').inspector(),  // TODO dev only
  */
 
 var apiKey, appKey;
-
+spinner.change_sequence(["◓", "◑", "◒", "◐"]);
 
 module.exports = function _auth(next) {
-  verifyApiKey(function(apiSuccess) {      // errors handled inside the method
-    if (apiSuccess) {
-      verifyAppKey(function(appSuccess) {  // errors handled inside the method
-        if (!appSuccess) {
-          out.error('Unable to verify application token.');
-          out.error('Exiting...');
-          process.exit(1);
-        } else {
-          // all good
-          setTimeout(next, 10); // back to command or the next middleware
-        }
-      });
-    }
-  });
+
+  async.waterfall([
+      // functions are basically sync if key are found locally
+      // so we need to wrap them to be executed on the next tick
+      async.ensureAsync(verifyApiKey),
+      async.ensureAsync(verifyAppKey)
+    ],
+    async.ensureAsync(function _finally(err, result) {
+      if (!isNullOrUndefined(err)) {
+        return out.error('Error logging in: ' + stringify(err));
+      }
+      if (result) {
+        setTimeout(next, 50); // all good - back to command or the next middleware
+      } else {
+        out.error('Unable to login. Try again with --trace.');
+      }
+    })
+  );
 };
 
 
@@ -63,25 +68,23 @@ module.exports = function _auth(next) {
  * @param cb
  */
 function verifyApiKey(cb) {
-
   // try the config file
-  if (isEmpty(apiKey)) {
-    apiKey = conf.getSync('apiKey');
+  apiKey = conf.getSync('apiKey');
+
+  if (!isEmpty(apiKey)) {
+    out.trace('Got API key from local config: ', apiKey);
+    return cb(null, apiKey);
   }
 
-  out.trace('Got API key from local config: ', apiKey);
-
   if (isEmpty(apiKey)) {
-    // if conf file doesn't deliver (session timeout?), ask the user to login
+    // if conf file doesn't deliver (first session or session timeout), ask the user to login
     getApiKeyWithCredentials(function(err, logseneApiKey) {
-      if (err) return out.error('Unable to get the API KEY: ', err.message);
+      if (err) return out.error('Unable to login: ' + err.message);
       out.trace('API key returned from the API server: ', logseneApiKey);
       conf.setSync('apiKey', logseneApiKey);
+      return cb(null, logseneApiKey);
     });
-
   }
-
-  return cb(!isEmpty(apiKey));
 }
 
 
@@ -89,17 +92,23 @@ function verifyApiKey(cb) {
  * Verifies whether all required app-related params are present
  * If not, prompts the user to choose an app (upon fetching them from API)
  * and stores the choice (appKey and appName) in the configuration
- * Errors are not propagated back, they are handled in place
  * @param cb
  * @returns {Boolean} success
  */
-function verifyAppKey(cb) {
+function verifyAppKey(apiKey, cb) {
+
+  if (isEmpty(apiKey)) {
+    return cb(new Error('No API key in APP request.'));
+  } else {
+    out.info('Successfuly logged in.');
+  }
+
   // if we find appKey in conf, use it
   appKey = conf.getSync('appKey');
 
   if (!isEmpty(appKey)) {
     out.trace('Got APP key from local config: ' + appKey);
-    return cb(true);
+    return cb(null, true);
 
   } else {
     // if appKey is not in local config, ask the API server for all Logsene apps
@@ -107,12 +116,13 @@ function verifyAppKey(cb) {
     out.trace('calling getApps API');
     getApps(apiKey, function(err, logseneApps) {
       if (err) {
-        out.error('Unable to get Logsene application list from the server.', err.message);
+        out.error(err.message);
         out.error('Exiting');
         process.exit(1);
       }
 
-      out.trace('API server returned: ', inspect(logseneApps));
+      out.trace('API server returned these apps: ');
+      out.trace(stringify(logseneApps));
 
       if (isNullOrUndefined(logseneApps)) {
         out.warn('There are no Logsene applications for your API key.\nExiting');
@@ -134,8 +144,9 @@ function verifyAppKey(cb) {
       var apps = map(logseneApps, function(a) {
         return pick(a, ['token', 'name']);
       });
-      out.trace('Picked only subset of keys for apps: ');
-      inspect(apps);                     // TODO clean
+
+      out.trace('Picked only subset of app keys: ');
+      out.trace(stringify(apps));
 
 
       if (activeAppsCnt === 0) {
@@ -144,7 +155,7 @@ function verifyAppKey(cb) {
       }
 
       out.trace('Active apps:\n');
-      inspect(activeApps);                  // TODO clean
+      out.trace(stringify(activeApps));
 
       if (activeAppsCnt > 1) {
         // prompt user to choose one of active apps
@@ -154,26 +165,17 @@ function verifyAppKey(cb) {
 
           conf.setSync('appKey', chosenApp.token);
           conf.setSync('appName', chosenApp.name);
-          return cb(true);
+          out.info('Successfuly established Logsene application session.');
+          return cb(null, true);
         });
       } else {
         // there's only one active Logsene app - use it without prompting the user
         conf.setSync('appKey', apps[0].token);
         conf.setSync('appName', apps[0].name);
-        return cb(true);
+        out.info('Successfuly established Logsene application session.');
+        return cb(null, true);
       }
     });
-
-    // streaming doesn't make sense here since I have to prompt the user
-    /*data
-        .pipe(JSONStream.stringifyObject('body.data.apps.logsene'))
-        .pipe(eventstream.mapSync(function(app){
-          return {
-            token: app.token,
-            name: app.name,
-            appStatus: app.appStatus
-          };
-        })).pipe(process.stdout);*/
   }
 }
 
@@ -182,36 +184,43 @@ function verifyAppKey(cb) {
  * Asks the client for username and password
  * Retrieves api key of that user
  *
- * @param {Function} mainCb
+ * @param {Function} cb
  * @api private
  */
-function getApiKeyWithCredentials(mainCb) {
-
+function getApiKeyWithCredentials(cb) {
+  out.info('No active sessions. Please log in using your Sematext account:');
   ask ('Enter your username: ', function _usernameCb(errUser, user) {
+
     if (!isEmpty(user)) {
-      conf.setSync('username', user);  // keep username around (btw: conf is sync)
+      conf.setSync('username', user);  // keep username around
       ask('Enter your password: ', {hidden: true}, function _passCb(errPass, pass) {
+
         if (!isEmpty(pass)) {
-
           spinner.start();
-          logsene.login(user, pass, function _loginAPICall(errApi, key) {
+          logsene.login(user, pass, function _loginAPICb(errApi, key) {
             spinner.stop();
-            if (errApi) return mainCb(new VError('Wrong username or password!', errApi));
+            if (errApi) {
+              out.error('Login was not successful' + stringify(errApi));
+              return cb(
+                new VError('Login was not successful. Possibly wrong username or password.', errApi)
+              );
+            }
 
-            mainCb(null, key);
+            out.info('Successfuly logged in and retrieved API key.');
+            cb(null, key);
+
           })
 
         } else {
           out.warn('Password cannot be empty!. Try again');
-          //getApiKeyWithCredentials(mainCb);
-          process.exit(0);  // bail out, but stay quiet
+          //getApiKeyWithCredentials(cb);
+          process.exit(1);  // bail out, but stay quiet
         }
       });
-
     } else {
       out.warn('Username cannot be empty! Try again.');
-      //getApiKeyWithCredentials(mainCb);
-      process.exit(0);
+      //getApiKeyWithCredentials(cb);
+      process.exit(1);
     }
   });
 }
@@ -225,6 +234,7 @@ function getApiKeyWithCredentials(mainCb) {
  */
 function chooseApp(apps, cb) {
   var appsPrompt = {};
+
   forEach(apps, function(ap) {
     appsPrompt[ap['token']] = ap.name;
   });
