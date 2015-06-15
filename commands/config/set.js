@@ -63,7 +63,24 @@ var Set = Command.extend({ use: ['session', 'auth'],
         '    --api-key <apiKey>\n' +
         '    --app-key <appKey>\n' +
         '    --app-name <appName>\n'+
-        '    --trace <true|false>\n\n' +
+        '    --trace <true|false>\n' +
+        '\n' +
+        'It is not necessary to explicitly set api-key, app-key nor app-name.\n' +
+        'logsene-cli will ask you to log in and choose Logsene application\n' +
+        'if keys are missing from the configuration\n' +
+        'Examples:\n' +
+        '  logsene ' + this.name + ' --api-key 11111111-1111-1111-1111-111111111111\n' +
+        '      sets your api key for the current session\n' +
+        '\n' +
+        '  logsene ' + this.name + ' --app-key 22222222-2222-2222-2222-222222222222\n' +
+        '      sets your Logsene application key for the current session\n' +
+        '\n' +
+        '  logsene ' + this.name + ' --trace [true]\n' +
+        '      activates tracing for the current session (true can be omitted)\n' +
+        '\n' +
+        '  logsene ' + this.name + ' --trace false\n' +
+        '      deactivates tracing for the current session\n' +
+        '\n' +
         '--------';
   }
 });
