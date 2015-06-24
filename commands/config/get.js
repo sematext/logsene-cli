@@ -5,10 +5,12 @@
 var Command     = require('ronin').Command,
     forown      = require('lodash.forown'),
     camelCase   = require('camel-case'),
-    argv        = require('../../lib/helpers').argv,
-    out         = require('../../lib/helpers').out,
-    isEmpty     = require('../../lib/helpers').isEmpty,
-    warnAndExit = require('../../lib/helpers').warnAndExit,
+    stringify   = require('safe-json-stringify'),
+    argv        = require('../../lib/util').argv,
+    out         = require('../../lib/util').out,
+    isEmpty     = require('../../lib/util').isEmpty,
+    warnAndExit = require('../../lib/util').warnAndExit,
+    dashCase    = require('../../lib/util').camelToDashCase,
     conf        = require('../../lib/config');
 
 
@@ -16,7 +18,7 @@ var Get = Command.extend({ use: ['session', 'auth'],
   desc: 'Get current user\'s configuration parameter(s)',
 
   run: function _run() {
-    out.trace('get command: argv: ' + JSON.stringify(argv));
+    out.trace('Called with arguments: ' + stringify(argv));
 
     if (argv._.length < 2) {
       warnAndExit('Too few parameters!', this);
@@ -33,7 +35,7 @@ var Get = Command.extend({ use: ['session', 'auth'],
     }
 
     var getParam = function _getParam(paramName) {
-      if (!isEmpty(argv[paramName])) {
+      if (!isEmpty(argv[dashCase(paramName)])) {
         out.info(paramName + ': ' + conf.getSync(paramName));
         process.exit(0);  // only a single param per get command (or use get --all)
       }
@@ -43,7 +45,7 @@ var Get = Command.extend({ use: ['session', 'auth'],
     // which param the get command was called with
     // so I have to check all of them
     conf.getAvailableParams().forEach(function _forEachParam(param) {
-      getParam(camelCase(param));
+      getParam(param);
     });
 
     process.exit(0); // bail out - that's it
@@ -56,7 +58,9 @@ var Get = Command.extend({ use: ['session', 'auth'],
         '    --api-key\n' +
         '    --app-key\n' +
         '    --app-name\n'+
-        '    --trace\n\n' +
+        '    --range-separator (used to separate two datetimes when specifying time range)\n'+
+        '    --trace\n' +
+        '    --all (return listing of all params from the current user\'s session)\n\n' +
         '--------';
   }
 });
