@@ -13,9 +13,10 @@ var async             = require('async'),
     forEach           = require('lodash.foreach'),
     filter            = require('lodash.filter'),
     size              = require('lodash.size'),
-    isEmpty           = require('../lib/helpers').isEmpty,
-    out               = require('../lib/helpers').out,
-    isNullOrUndefined = require('../lib/helpers').isNullOrUndefined,
+    argv              = require('../lib/util').argv,
+    isEmpty           = require('../lib/util').isEmpty,
+    out               = require('../lib/util').out,
+    isNullOrUndefined = require('../lib/util').isNullOrUndefined,
     conf              = require('../lib/config'),
     logsene           = require('../lib/logsene-api');
 
@@ -35,36 +36,47 @@ var async             = require('async'),
  * We write down both to the local configuration file.
  */
 
-var apiKey, appKey;
+var apiKey,
+    appKey,
+    traceMsg = '\nTurn on tracing (logsene config set --trace) and try again.';
+
 spinner.change_sequence(["◓", "◑", "◒", "◐"]);
+
 
 module.exports = function _auth(next) {
 
+  // if the client is just turning tracing on, skip auth
+  if (argv._.set && argv.trace) {
+    return setTimeout(next, 50);
+  }
+
   async.waterfall([
-      // functions are basically sync if key are found locally
+      // functions are basically sync if keys are found locally
       // so we need to wrap them to be executed on the next tick
       async.ensureAsync(verifyApiKey),
       async.ensureAsync(verifyAppKey)
     ],
-    async.ensureAsync(function _finally(err, result) {
+    // this one doesn't need to be async
+    function _finally(err, result) {
       if (err) {
-        return out.error('Error logging in ' + (err.message ? err.message : ''));
+        return out.error('Error logging in ' + (err.message ? err.message : '') + traceMsg);
       }
       if (result) {
         setTimeout(next, 50); // all good - back to command or the next middleware
       } else {
-        out.error('Unable to login. Try again with --trace.');
+        out.error('Unable to login.' + traceMsg);
+        process.exit(1);
       }
-    })
+    }
   );
 };
 
 
 /**
- * Checks the local config for the API key
+ * Checks the current session for the API key
  * If not found locally, asks the user to login.
  * Login, if successful, yields the API key
- * Which is then written to the local configuration.
+ * Which is then written to the current session.
  * @param cb
  */
 function verifyApiKey(cb) {
@@ -89,10 +101,11 @@ function verifyApiKey(cb) {
 
 
 /**
- * Verifies whether all required app-related params are present
+ * Verifies whether application key is available in the session.
  * If not, prompts the user to choose an app (upon fetching them from API)
- * and stores the choice (appKey and appName) in the configuration
+ * and stores the choice (appKey and appName) in the session.
  * @param cb
+ * @param {String} apiKey
  * @returns {Boolean} success
  */
 function verifyAppKey(apiKey, cb) {

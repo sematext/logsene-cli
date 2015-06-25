@@ -4,7 +4,7 @@
 
 var //isNaN  = require('util').isNaN,
     conf    = require('../lib/config'),
-    out     = require('../lib/helpers').out;
+    out     = require('../lib/util').out;
 
 
 module.exports = function _session(next) {
@@ -34,13 +34,13 @@ module.exports = function _session(next) {
 function isSessionExpired() {
   var millisInSessionDuration = 1000 * 60 * conf.sessionDuration;
   var sessionStart = conf.getSync('sessionStart');
-  var startTime = Date.parse(sessionStart);
+  var startTime = Date.parse(sessionStart) || NaN;
 
   if (isNaN(startTime)) {
-    out.trace('Session duration is not a number');  // todo trace
+    out.trace('Session duration is not a number');
     return true;
   }
-  out.trace('sessionStart: ' + new Date(startTime).toISOString());  // TODO trace
+  out.trace('sessionStart: ' + new Date(startTime).toISOString());
   return Date.now() - startTime > millisInSessionDuration;
 }
 
@@ -50,6 +50,6 @@ function isSessionExpired() {
  * @public
  */
 function extendSession() {
-  // e.g. '2015-06-11T12:28:48.888Z' (no DST)
+  // e.g. '2015-06-11T12:28:48.888Z' (UTC with no DST)
   conf.setSync('sessionStart', (new Date).toISOString());
 }

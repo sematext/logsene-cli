@@ -1,6 +1,6 @@
 {
   "name": "logsene-cli",
-  "version": "0.2.0",
+  "version": "1.0.0-alpha",
   "description": "Logsene command-line interface",
   "main": "index.js",
   "preferGlobal": true,
@@ -20,36 +20,38 @@
     "spm"
   ],
   "author": "Marko Bonaći",
-  "license": "Apache v2.0",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/sematext/logsene-cli/issues"
   },
   "homepage": "https://github.com/sematext/logsene-cli",
   "dependencies": {
     "JSONStream": "^1.0.4",
-    "array-pluck": "^1.0.0",
     "asking": "^0.1.2",
     "async": "^1.2.1",
     "camel-case": "^1.1.2",
     "chalk": "^1.0.0",
     "configstore": "^1.0.0",
+    "date.js": "^0.2.0",
+    "elastic.js": "^1.2.0",
     "elasticsearch": "^4.1.0",
     "elasticsearch-streams": "0.0.9",
     "end-of-stream": "^1.1.0",
-    "event-stream": "^3.3.1",
-    "extend-object": "^1.0.0",
     "generator-ronin": "^0.1.2",
-    "graceful-fs": "^3.0.7",
+    "graceful-fs": "^3.0.8",
     "hyperquest": "^1.2.0",
-    "jsonfile": "^2.0.1",
     "jsonist": "^1.0.2",
     "lodash.filter": "^3.1.1",
     "lodash.foreach": "^3.0.3",
     "lodash.forown": "^3.0.2",
+    "lodash.intersection": "^3.2.0",
     "lodash.map": "^3.1.4",
     "lodash.pick": "^3.1.0",
     "lodash.size": "^3.0.2",
+    "lodash.values": "^3.0.0",
     "minimist": "^1.1.1",
+    "moment": "^2.10.3",
+    "month-days": "^1.0.0",
     "osenv": "^0.1.1",
     "ronin": "^0.1.2",
     "safe-json-stringify": "^1.0.3",
@@ -61,7 +63,5 @@
   "bin": {
     "logsene": "./bin/logsene-cli"
   },
-  "devDependencies": {
-    "eyespect": "^0.1.10"
-  }
+  "devDependencies": {}
 }
