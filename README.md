@@ -10,7 +10,8 @@ Still in Beta.
 ## Instalation
 
 `git clone https://github.com/sematext/logsene-cli.git`  
-`cd logsene-cli && npm link`
+`cd logsene-cli && npm install`
+`npm link`
 
 ## Commands
 ### logsene search
