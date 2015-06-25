@@ -73,10 +73,10 @@ var Set = Command.extend({ use: ['session', 'auth'],
         'if keys are missing from the configuration\n' +
         'Examples:\n' +
         '  logsene ' + this.name + ' --api-key 11111111-1111-1111-1111-111111111111\n' +
-        '      sets your api key for the current session\n' +
+        '      sets the api key for the current session\n' +
         '\n' +
         '  logsene ' + this.name + ' --app-key 22222222-2222-2222-2222-222222222222\n' +
-        '      sets your Logsene application key for the current session\n' +
+        '      sets Logsene application key for the current session\n' +
         '\n' +
         '  logsene ' + this.name + ' --range-separator TO\n' +
         '      sets default separator of two datetimes for time ranges (default is /, as per ISO6801)\n' +

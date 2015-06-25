@@ -25,61 +25,6 @@ var Command         = require('ronin').Command,
 
 var nl = '\n';
 
-/**
- * Assembles ejs filter according to query entered by the user
- * It checks whether user expressed time component and, if yes,
- * composes the filter accordingly
- * @returns assembled ejs filter
- * @private
- */
-var getTimeFilterSync = function _getTimeFilterSync() {
-  var filter;
-
-  // first check whether user provided the time component (--t)
-  if (!argv.t) {
-    // when not specified, default time is the last 60m
-    var millisInHour      = 3600000,
-        nowMinusHour      = Date.now() - millisInHour,
-        defaultStartTime  = (new Date(nowMinusHour)).toISOString();
-
-    filter = ejs.RangeFilter('@timestamp').gte(defaultStartTime);
-
-  } else {
-
-    // datetime param provided
-    var t = argv.t,
-        argvSep = argv.sep,
-        confSep = conf.getSync('rangeSeparator'),
-        sep = argvSep ? argvSep : (confSep ? confSep : '/');
-
-    out.trace('Range separator for this session: ' + sep);
-
-    if (disallowedChars.indexOf(sep) > -1)
-      warnAndExit(sep + ' is not allowed as a range separator. That\'s because it' + nl +
-          'clashes with standard ISO 8601 datetime or duration notation' + nl +
-          'The default separator, forward slash, should be used.' + nl +
-          'It is also possible to use a custom separator (e.g. \' TO \').' + nl +
-          'Disallowed chars: ' + disallowedChars.join(', ') + '' + nl +
-          'e.g. logsene config set --sep TO', Search);
-
-
-    // we get back {start: Date[, end: Date]} and that's all we care about
-    var parsed = parseTime(t, {separator: sep});
-
-    if (parsed) {
-      filter = ejs.RangeFilter('@timestamp').gte(parsed.start);
-      if (isDef(parsed.end)) {  // if range, add the 'end' condition to the filter
-        filter = filter.lte(parsed.end);
-      }
-    } else {
-      warnAndExit('Unrecognized datetime format.', Search);
-    }
-  }
-
-  out.trace('getTimeFilterSync returning:' + nl + stringify(filter.toJSON()));
-  return filter;
-};
-
 
 var Search = Command.extend({ use: ['session', 'auth'],
   desc: 'Search Logsene logs',
@@ -235,7 +180,7 @@ var Search = Command.extend({ use: ['session', 'auth'],
     '      note: default separator is the forward slash (as per ISO-8601)' + nl +
     '      note: if a parameter contains spaces, it must be enclosed in quotes' + nl +
     nl +
-    '  logsene ' + this.name + ' --t "last Friday at 13:00/last Friday at 13:30"' + nl +
+    '  logsene ' + this.name + ' --t "last Friday at 13/last Friday at 13:30"' + nl +
     '      it is also possible to use "human language" to designate datetime' + nl +
     '      note: it may be used in place of datetime (e.g. "last friday between 12 and 14" is not allowed)' + nl +
     '      note: may yield unpredictable datetime values' + nl +
@@ -291,19 +236,19 @@ var Search = Command.extend({ use: ['session', 'auth'],
     '       ' + disallowedChars.join(', ') + nl +
     nl +
     'Allowed "human" formats:' + nl +
-    '  10 minutes ago' + nl +
-    '  yesterday at 12:30pm' + nl +
-    '  last night (night becomes 19:00)' + nl +
-    '  last month' + nl +
-    '  last friday at 2pm' + nl +
-    '	 in 3 hours' + nl +
-    '	 tomorrow night at 5' + nl +
-    '	 wednesday 2 weeks ago' + nl +
-    '	 in 2 months' + nl +
-    '	 next week saturday morning (morning becomes 06:00)' + nl +
-    '  e.g.' + nl +
-    '    1M1d42s' + nl +
-    '  note: duration is specified as a series of number and time designator pairs, e.g. 1y2M8d22h8m48s' + nl +
+    '    10 minutes ago' + nl +
+    '    yesterday at 12:30pm' + nl +
+    '    last night (night becomes 19:00)' + nl +
+    '    last month' + nl +
+    '    last friday at 2pm' + nl +
+    '    3 hours ago' + nl +
+    '    2 weeks ago at 17' + nl +
+    '    wednesday 2 weeks ago' + nl +
+    '    2 months ago' + nl +
+    '    last week saturday morning (morning becomes 06:00)' + nl +
+    '  note: "human" format can be used instead of date-time' + nl +
+    '  note: it is not possible to express duration with "human" format (e.g. "from 2 to 3 this morining")' + nl +
+    '  note: it is recommended to avoid human format, as it may yield unexpected results' + nl +
     nl +
     '--------';
   }
@@ -343,6 +288,62 @@ var getQuerySync = function _getQuery() {
 
   out.trace('Returning query from getQuerySync:' + nl + stringify(query.toJSON()));
   return query;
+};
+
+
+/**
+ * Assembles ejs filter according to query entered by the user
+ * It checks whether user expressed time component and, if yes,
+ * composes the filter accordingly
+ * @returns assembled ejs filter
+ * @private
+ */
+var getTimeFilterSync = function _getTimeFilterSync() {
+  var filter;
+
+  // first check whether user provided the time component (--t)
+  if (!argv.t) {
+    // when not specified, default time is the last 60m
+    var millisInHour      = 3600000,
+        nowMinusHour      = Date.now() - millisInHour,
+        defaultStartTime  = (new Date(nowMinusHour)).toISOString();
+
+    filter = ejs.RangeFilter('@timestamp').gte(defaultStartTime);
+
+  } else {
+
+    // datetime param provided
+    var t = argv.t,
+        argvSep = argv.sep,
+        confSep = conf.getSync('rangeSeparator'),
+        sep = argvSep ? argvSep : (confSep ? confSep : '/');
+
+    out.trace('Range separator for this session: ' + sep);
+
+    if (disallowedChars.indexOf(sep) > -1)
+      warnAndExit(sep + ' is not allowed as a range separator. That\'s because it' + nl +
+          'clashes with standard ISO 8601 datetime or duration notation' + nl +
+          'The default separator, forward slash, should be used.' + nl +
+          'It is also possible to use a custom separator (e.g. \' TO \').' + nl +
+          'Disallowed chars: ' + disallowedChars.join(', ') + '' + nl +
+          'e.g. logsene config set --sep TO', Search);
+
+
+    // we get back {start: Date[, end: Date]} and that's all we care about
+    var parsed = parseTime(t, {separator: sep});
+
+    if (parsed) {
+      filter = ejs.RangeFilter('@timestamp').gte(parsed.start);
+      if (isDef(parsed.end)) {  // if range, add the 'end' condition to the filter
+        filter = filter.lte(parsed.end);
+      }
+    } else {
+      warnAndExit('Unrecognized datetime format.', Search);
+    }
+  }
+
+  out.trace('getTimeFilterSync returning:' + nl + stringify(filter.toJSON()));
+  return filter;
 };
 
 
