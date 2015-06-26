@@ -12,12 +12,13 @@ var Command         = require('ronin').Command,
     Transform       = require('stream').Transform,
     JSONStream      = require('JSONStream'),
     eos             = require('end-of-stream'),
-    argv            = require('../lib/util').argv,
     out             = require('../lib/util').out,
+    argv            = require('../lib/util').argv,
     isDef           = require('../lib/util').isDef,
-    isStrOrBoolTrue = require('../lib/util').isStrOrBoolTrue,
-    stringify       = require('../lib/util').safeJsonStringify,
     warnAndExit     = require('../lib/util').warnAndExit,
+    wrapInQuotes    = require('../lib/util').wrapInQuotes,
+    isSOBT          = require('../lib/util').isStrOrBoolTrue,
+    stringify       = require('../lib/util').safeJsonStringify,
     parseTime       = require('../lib/time').parse,
     disallowedChars = require('../lib/time').disallowedChars,
     conf            = require('../lib/config'),
@@ -30,21 +31,17 @@ var Search = Command.extend({ use: ['session', 'auth'],
   desc: 'Search Logsene logs',
 
   run: function _run() {
-    out.trace('Called with arguments: ' + stringify(argv));
+    var logLev = isSOBT(conf.getSync('trace')) || isSOBT(argv.trace) ? 'trace' : 'error';
+    out.trace ('Initializing ES with log level ' + logLev);
+    api.initES(logLev);
 
-    // any number of params is allowed
-    if (argv._.length === 2) {
-      // if no -q use first command after search as q
-      // so 'logsene search <query>' works as expected
-      argv.q = argv._[1];
-    }
-
+    out.trace('Search called with arguments: ' + stringify(argv));
 
     var opts = {
       appKey:   conf.getSync('appKey'),
       size:     argv.s || conf.getSync('defaultSize') || conf.maxHits,
       offset:   argv.o || 0,
-      logLevel: isStrOrBoolTrue(conf.getSync('trace')) ? 'trace' : 'error',
+      logLevel: isSOBT(conf.getSync('trace')) ? 'trace' : 'error',
       body:     ejs.Request()
                   .query(ejs.FilteredQuery(getQuerySync(), getTimeFilterSync()))
                   .sort('@timestamp', 'asc')
@@ -257,37 +254,94 @@ var Search = Command.extend({ use: ['session', 'auth'],
 
 /**
  * Assembles ejs query according to query entered by the user
- * It checks whether user entered just one term, multi-term or a phrase?
+ * It checks whether user entered one or more terms or a phrase?
+ * It also checks whether the default operator OR is overridden
  * @returns assembled ejs query
  * @private
  */
 var getQuerySync = function _getQuery() {
   var query;
 
-  if (argv._.length === 1) {
+  if (!isDef(argv.q) && argv._.length === 1) {
     // if client just entered 'logsene search'
-    // give him back all log entries (from the last hour - getTimeSync)
+    // give him back ALL log entries (from the last hour - see getTimeSync)
     query = ejs.MatchAllQuery();
 
-  } else if (argv._.length === 2) {
-    // if query is a single word or a phrase in quotes
-    // for phrase, make sure that qoutes ar visible in the query
-    var q;
-    if (argv._[1].indexOf(' ') > -1) {  // phrase
-      q = '"' + argv._[1] + '"';
-    } else {                            // single word
-      q = argv._[1];
-    }
+  } else {
+    var q = adjustQuery();
     query = ejs.QueryStringQuery().query(q).defaultOperator(getOperator());
-
-  } else if (argv._.length > 2) {
-    // if query has multiple words, without quotes, treat it as normal OR query
-    var qMulti = argv._.slice(1).join(' ');
-    query = ejs.QueryStringQuery().query(qMulti).defaultOperator(getOperator());
   }
 
   out.trace('Returning query from getQuerySync:' + nl + stringify(query.toJSON()));
   return query;
+};
+
+
+/**
+ *  Any number of params is allowed and --q can be omitted
+ *  so we need to potentially combine --q and commands
+ *  we also need to wrap phrases in quotes
+ *  NOTE: --q may originally have only a single phrase or a term
+ *  e.g. with --q:
+ *      logsene search --q response took --and --t 1d
+ *      {"_":["search","took"],"q":"response","and":true,"t":"1d"}
+ *  e.g. without --q:
+ *      logsene search response took --and --t 1d
+ *      {"_":["search","response","took"],"and":true,"t":"1d"}
+ *  e.g. with --q and with phrases
+ *      logsene search --q "response took" "extra hour" last --and --t 1d
+ *      {"_":["search","extra hour","last"],"q":"response took","and":true,"t":"1d"}
+ *  e.g. without --q and with phrases
+ *      logsene search "response took" "extra hour" last --and --t 1d
+ *      {"_":["search","response took","extra hour","last"],"and":true,"t":"1d"}
+ * @returns {*}
+ * @private
+ */
+var adjustQuery = function _adjustQuery() {
+  var q;
+
+  if (isDef(argv.q)) {
+    q = quoteIfPhrase(argv.q);
+  }
+
+  if (argv._.length > 1) {  // not only search in _
+    // if there are additional search terms/phrases,
+    // they were collected as commands by the minimist (see examples above)
+    // append those puppies to q
+    forEach(argv._.splice(1), function _adjQ(str) {
+      q = (q ? q + ' ' : '') + quoteIfPhrase(str);
+    });
+  }
+
+  out.trace('adjustQuery: adjusted query to ' + q);
+  return q;
+};
+
+
+/**
+ * Wraps string in double quotes if it contains space
+ * @param {String} str to check
+ * @returns {String} possibly quoted string
+ * @private
+ */
+var quoteIfPhrase = function _quoteIfPhrase(str) {
+  return str.indexOf(' ') > -1 ? wrapInQuotes(str) : str;
+};
+
+
+/**
+ * Returns AND operator if explicitly specified by the user
+ * Otherwise returns default OR
+ * @returns {String} Operator
+ * @private
+ */
+var getOperator = function _getOperator() {
+  out.trace('isSOBT(argv.op): ' + isDef(argv.op));
+  if (argv.and || (isDef(argv.op) && argv.op.toLowerCase() === 'and')) {
+    return 'and';
+  } else {
+    return 'or';
+  }
 };
 
 
@@ -328,9 +382,15 @@ var getTimeFilterSync = function _getTimeFilterSync() {
           'Disallowed chars: ' + disallowedChars.join(', ') + '' + nl +
           'e.g. logsene config set --sep TO', Search);
 
+    try {
 
-    // we get back {start: Date[, end: Date]} and that's all we care about
-    var parsed = parseTime(t, {separator: sep});
+      // we get back {start: Date[, end: Date]} and that's all we care about
+      var parsed = parseTime(t, {separator: sep});
+
+    } catch (err) {
+      out.error('DateTime parser: ' + err.message);
+      process.exit(1);
+    }
 
     if (parsed) {
       filter = ejs.RangeFilter('@timestamp').gte(parsed.start);
@@ -344,21 +404,6 @@ var getTimeFilterSync = function _getTimeFilterSync() {
 
   out.trace('getTimeFilterSync returning:' + nl + stringify(filter.toJSON()));
   return filter;
-};
-
-
-/**
- * Returns AND operator if explicitly specified by the user
- * Otherwise returns default OR
- * @returns {String} Operator
- * @private
- */
-var getOperator = function _getOperator() {
-  if (argv.and || (isStrOrBoolTrue(argv.op) && argv.op === 'and')) {
-    return 'and';
-  } else {
-    return 'or';
-  }
 };
 
 
