@@ -7,7 +7,7 @@ Currently supports OS X and Linux.
 ## Please note
 Latest: 1.0.2-alpha, and you know what that means.
 
-## Instalation
+## Installation
 
 `git clone https://github.com/sematext/logsene-cli.git`  
 `cd logsene-cli && npm install`  
