@@ -12,6 +12,8 @@ var Command         = require('ronin').Command,
     Transform       = require('stream').Transform,
     JSONStream      = require('JSONStream'),
     eos             = require('end-of-stream'),
+    Table           = require('cli-table'),
+    colors          = require('colors'),
     out             = require('../lib/util').out,
     argv            = require('../lib/util').argv,
     isDef           = require('../lib/util').isDef,
@@ -116,84 +118,101 @@ var Search = Command.extend({ use: ['session', 'auth'],
 
 
   help: function _help() {
-    return 'Usage: logsene ' + this.name + ' query [OPTIONS]' + nl +
-    '  where OPTIONS may be:' + nl +
-    '    --q <query>        Query string (--q parameter can be omitted)' + nl +
-    '    --op AND           OPTIONAL Overrides default OR operator' + nl +
-    '    --t <interval>     OPTIONAL ISO 8601 datetime or duration or time range' + nl +
-    '    --s <size>         OPTIONAL Number of matches to return. Defaults to ' + conf.maxHits + '' + nl +
-    '    --o <offset>       OPTIONAL Number of matches to skip from the beginning. Defaults to 0' + nl +
-    '    --json             OPTIONAL Returns JSON instead of TSV' + nl +
-    '    --sep              OPTIONAL Sets the separator between two datetimes when specifying time range' + nl +
+    var table = new Table({
+      head: ['--t parameter', 'range start', 'range end']
+    });
+
+    table.push(
+        ['2016-06-24T18:42', 'timestamp', 'now'],
+        ['2016-06-24T18:42/2016-06-24T18:52:30', 'timestamp', 'timestamp'],
+        ['2016-06-24T18:42/+1d', 'timestamp', 'timestamp + duration'],
+        ['2016-06-24T18:42/-1d', 'timestamp - duration', 'timestamp'],
+        ['2h30m8s', 'now - duration', 'now'],
+        ['2h/+1h', 'now - first duration', 'start + second duration'],
+        ['5d10h25/2016-06-24T18:42', 'now - duration', 'timestamp']
+    );
+
+    return 'Usage: logsene search query [OPTIONS]'.bold + nl +
+    '  where OPTIONS may be:'.grey + nl +
+    '    --q <query>    '.yellow + '  Query string (--q parameter can be omitted)' + nl +
+    '    --op AND       '.yellow + '  OPTIONAL Overrides default OR operator between multiple terms in a query' + nl +
+    '    --t <interval> '.yellow + '  OPTIONAL ISO 8601 datetime or duration or time range' + nl +
+    '    --s <size>     '.yellow + '  OPTIONAL Number of matches to return. Defaults to ' + conf.maxHits + '' + nl +
+    '    --o <offset>   '.yellow + '  OPTIONAL Number of matches to skip from the beginning. Defaults to 0' + nl +
+    '    --json         '.yellow + '  OPTIONAL Returns JSON instead of TSV' + nl +
+    '    --sep          '.yellow + '  OPTIONAL Sets the separator between two datetimes when specifying time range' + nl +
     nl +
-    'Examples:' + nl +
-    '  logsene ' + this.name + '' + nl +
-    '      returns last 1h of log entries' + nl +
+    'Examples:'.underline.green + nl +
+    '  logsene search'.blue + nl +
+    '      returns last 1h of log entries'.grey + nl +
     nl +
-    '  logsene ' + this.name + ' --q ERROR' + nl +
-    '      returns last 1h of log entries that contain the term ERROR' + nl +
+    '  logsene search --q ERROR'.blue + nl +
+    '      returns last 1h of log entries that contain the term ERROR'.grey + nl +
     nl +
-    '  logsene ' + this.name + ' ERROR' + nl +
-    '      equivalent to the previous example' + nl +
+    '  logsene search ERROR'.blue + nl +
+    '      equivalent to the previous example'.grey + nl +
     nl +
-    '  logsene ' + this.name + ' UNDEFINED SEGFAULT' + nl +
-    '      returns last 1h of log entries that have either of the terms' + nl +
-    '      note: default operator is OR' + nl +
+    '  logsene search UNDEFINED SEGFAULT'.blue + nl +
+    '      returns last 1h of log entries that have either of the terms'.grey + nl +
+    '      note: default operator is OR'.grey + nl +
     nl +
-    '  logsene ' + this.name + ' SEGFAULT Segmentation --op AND' + nl +
-    '      returns last 1h of log entries that have both terms' + nl +
-    '      note: convenience parameter --and has the same effect' + nl +
+    '  logsene search SEGFAULT Segmentation --op AND'.blue + nl +
+    '      returns last 1h of log entries that have both terms'.grey + nl +
+    '      note: convenience parameter --and has the same effect'.grey + nl +
     nl +
-    '  logsene ' + this.name + ' --q "Server not responding"' + nl +
-    '      returns last 1h of log entries that contain the given phrase' + nl +
+    '  logsene search --q "Server not responding"'.blue + nl +
+    '      returns last 1h of log entries that contain the given phrase'.grey + nl +
     nl +
-    '  logsene ' + this.name + ' --t 1y8M4d8h30m2s' + nl +
-    '      returns all the log entries reaching back to' + nl +
-    '      1 year 8 months 4 days 8 hours 30 minutes and 2 seconds' + nl +
-    '      note: any datetime component can be omitted (shown in the following two examples)' + nl +
-    '      note: months must be specified with uppercase M (distinction from minutes)' + nl +
+    '  logsene search "rare thing" --t 1y8M4d8h30m2s'.blue + nl +
+    '      returns all the log entries that contain the phrase "rare thing" reaching back to'.grey + nl +
+    '      1 year 8 months 4 days 8 hours 30 minutes and 2 seconds'.grey + nl +
+    '      note: when specifying duration, any datetime designator character can be omitted'.grey + nl +
+    '            (shown in the following two examples)'.grey + nl +
+    '      note: months must be specified with uppercase M (distinction from minutes)'.grey + nl +
+    '      note: minutes (m) are the default must be specified with uppercase M (distinction from minutes)'.grey + nl +
     nl +
-    '  logsene ' + this.name + ' --t 1h30m' + nl +
-    '      returns all the log entries from the last 1,5h' + nl +
+    '  logsene search --t 1h30m'.blue + nl +
+    '      returns all the log entries from the last 1,5h'.grey + nl +
     nl +
-    '  logsene ' + this.name + ' --t 90' + nl +
-    '      equivalent to the previous example (default time unit is minute)' + nl +
+    '  logsene search --t 90'.blue + nl +
+    '      equivalent to the previous example (default time unit is minute)'.grey + nl +
     nl +
-    '  logsene ' + this.name + ' --t 2015-06-20T20:48' + nl +
-    '      returns all the log entries that were logged after the provided datetime' + nl +
-    '      note: allowed formats listed at the bottom of this help message' + nl +
+    '  logsene search --t 2015-06-20T20:48'.blue + nl +
+    '      returns all the log entries that were logged after the provided datetime'.grey + nl +
+    '      note: allowed formats listed at the bottom of this help message'.grey + nl +
     nl +
-    '  logsene ' + this.name + ' --t "2015-06-20 20:28"' + nl +
-    '      returns all the log entries that were logged after the provided datetime' + nl +
-    '      note: if a parameter contains spaces, it must be enclosed in quotes' + nl +
+    '  logsene search --t "2015-06-20 20:28"'.blue + nl +
+    '      returns all the log entries that were logged after the provided datetime'.grey + nl +
+    '      note: if a parameter contains spaces, it must be enclosed in quotes'.grey + nl +
     nl +
-    '  logsene ' + this.name + ' --t 2015-06-16T22:27:41/2015-06-18T22:27:41' + nl +
-    '      returns all the log entries that were logged between provided timestamps' + nl +
-    '      note: date range must either contain forward slash between datetimes,' + nl +
-    '            or a different range separator must be specified (shown in the next example)' + nl +
+    '  logsene search --t 2015-06-16T22:27:41/2015-06-18T22:27:41'.blue + nl +
+    '      returns all the log entries that were logged between the two provided timestamps'.grey + nl +
+    '      note: date range must either contain forward slash between datetimes,'.grey + nl +
+    '            or a different range separator must be specified (shown in the next example)'.grey + nl +
     nl +
-    '  logsene ' + this.name + ' --t "2015-06-16T22:27:41 TO 2015-06-18T22:27:41" --sep " TO "' + nl +
-    '      same as previous command, except it sets the custom string separator that denotes a range' + nl +
-    '      note: default separator is the forward slash (as per ISO-8601)' + nl +
-    '      note: if a parameter contains spaces, it must be enclosed in quotes' + nl +
+    '  logsene search --t "2015-06-16T22:27:41 TO 2015-06-18T22:27:41" --sep " TO "'.blue + nl +
+    '      same as previous command, except it sets the custom string separator that denotes a range'.grey + nl +
+    '      note: default separator is the forward slash (as per ISO-8601)'.grey + nl +
+    '      note: if a parameter contains spaces, it must be enclosed in quotes'.grey + nl +
     nl +
-    '  logsene ' + this.name + ' --t "last Friday at 13/last Friday at 13:30"' + nl +
-    '      it is also possible to use "human language" to designate datetime' + nl +
-    '      note: it may be used in place of datetime (e.g. "last friday between 12 and 14" is not allowed)' + nl +
-    '      note: may yield unpredictable datetime values' + nl +
+    '  logsene search --t "last Friday at 13/last Friday at 13:30"'.blue + nl +
+    '      it is also possible to use "human language" to designate datetime'.grey + nl +
+    '      note: it may be used only in place of datetime. Expressing range is not allowed'.grey + nl +
+    '            (e.g. "last friday between 12 and 14" is not allowed)'.grey + nl +
+    '      note: may yield unpredictable datetime values'.grey + nl +
     nl +
-    '  logsene ' + this.name + ' --q ERROR --s 20' + nl +
-    '      returns at most 20 latest log entries with the term ERROR' + nl +
+    '  logsene search --q ERROR --s 20'.blue + nl +
+    '      returns at most 20 latest log entries (within the last hour) with the term ERROR'.grey + nl +
     nl +
-    '  logsene ' + this.name + ' ERROR --s 50 --o 20' + nl +
-    '      returns chronologically sorted hits 21st to 71st (offset=20)' + nl +
-    '      note: default sort order is ascending (for convenience - latest on the bottom)' + nl +
+    '  logsene search ERROR --s 50 --o 20'.blue + nl +
+    '      returns chronologically sorted hits 21st to 71st (offset=20)'.grey + nl +
+    '      note: default sort order is ascending (for convenience - latest on the bottom)'.grey + nl +
     nl +
-    '  logsene ' + this.name + ' --help' + nl +
-    '      outputs this usage information' + nl +
+    '  logsene search --help'.blue + nl +
+    '      outputs this usage information'.grey + nl +
     nl +
-    'Allowed datetime formats:' + nl +
-    '  YYYY[-]MM[-]DD[T][HH[:MM[:SS]]]' + nl +
+    'Allowed datetime formats:'.green + nl +
+    '  YYYY[-]MM[-]DD[T][HH[:MM[:SS]]]'.yellow + nl +
     '  e.g.' + nl +
     '    YYYY-MM-DD HH:mm:ss' + nl +
     '    YYYY-MM-DDTHH:mm' + nl +
@@ -202,50 +221,49 @@ var Search = Command.extend({ use: ['session', 'auth'],
     '    YYYYMMDD HH:mm' + nl +
     '    YYYYMMDDHH:mm' + nl +
     '    YYYYMMDDHHmm' + nl +
-    '  note: to use UTC instead of local time, append Z to datetime' + nl +
-    '  note: all datetime components are optional except date (YYYY, MM and DD)' + nl +
-    '        If not specified, component defaults to its lowest possible value' + nl +
-    '  note: date part may be separated from time by T (ISO-8601), space or nothing at all' + nl +
+    '    YYYYMMDDHHmm' + nl +
+    '  note: to use UTC instead of local time, append Z to datetime'.grey + nl +
+    '  note: all datetime components are optional except date (YYYY, MM and DD)'.grey + nl +
+    '        If not specified, component defaults to its lowest possible value'.grey + nl +
+    '  note: date part may be separated from time by T (ISO-8601), space or nothing at all'.grey + nl +
     nl +
-    'Allowed duration format:' + nl +
-    '  [Ny][NM][Nd][Nh][Nm][Ns]' + nl +
+    'Allowed duration format:'.green + nl +
+    '  [Ny][NM][Nd][Nh][Nm][Ns]'.yellow + nl +
     '  e.g.' + nl +
-    '    1M1d42s' + nl +
-    '  note: duration is specified as a series of number and time designator pairs, e.g. 1y2M8d22h8m48s' + nl +
+    '    1y2M8d22h8m48s' + nl +
+    '  note: uppercase M must be used for months, lowercase m for minutes'.grey + nl +
+    '  note: if only a number is specified, it defaults to minutes'.grey + nl +
     nl +
-    'Allowed datetime range formats' + nl +
-    '  range can be expressed in two ways, with datetime/datetime or with datetime/duration:' + nl +
+    'Allowed range formats'.green + nl +
+    '  range can be expressed in all datetime/duration combinations:' + nl +
     '  datetime/datetime' + nl +
-    '  datetime/{+|-}duration' + nl +
-    '  where / is default range separator string and + or - sign is duration designator (examples listed below)' + nl +
-    '    plus  (+) duration designator means that filter\'s end time will be constructed by adding duration to start time' + nl +
-    '    minus (-) means that start time will be datetime - duration and end time will be what used to be start time' + nl +
-    '    YYYY[-]MM[-]DD[T][HH[:MM[:SS]]]/YYYY[-]MM[-]DD[T][HH[:MM[:SS]]]' + nl +
-    '    YYYY[-]MM[-]DD[T][HH[:MM[:SS]]]/+[Ny][NM][Nd][Nh][Nm][Ns]' + nl +
-    '  e.g.' + nl +
-    '    2015-06-23 17:45/2015-06-23 18:45' + nl +
-    '    2015-06-23 17:45/-1M' + nl +
-    '        gets translated to: 2015-05-23 17:45/2015-06-23 17:45' + nl +
-    '    2015-06-23 17:45/+15m' + nl +
-    '        gets translated to: 2015-06-23 17:45/2015-06-23 18:00' + nl +
-    '  note: all allowable datetime formats are also permitted when specifying ranges' + nl +
-    '  note: disallowed range separators:' + nl +
-    '       ' + disallowedChars.join(', ') + nl +
+    '  datetime/(+|-)duration' + nl +
+    '  duration/(+|-)duration' + nl +
+    '  duration/datetime' + nl +
+    '  note: / is default range separator string and + or - sign is duration designator'.grey + nl +
+    '  note: duration must begin with either + or - when used in end of range position'.grey + nl +
     nl +
-    'Allowed "human" formats:' + nl +
+    '  The following table shows how ranges are calculated, given the different input parameters'.grey + nl +
+    table.toString() +
+    nl +
+    '  note: all allowable datetime formats are also permitted when specifying ranges'.grey + nl +
+    '  note: disallowed range separators:'.grey + nl +
+    '       ' + disallowedChars.join(', ').grey + nl +
+    nl +
+    'Allowed "human" formats:'.green + nl +
     '    10 minutes ago' + nl +
     '    yesterday at 12:30pm' + nl +
-    '    last night (night becomes 19:00)' + nl +
+    '    last night ' + '(night becomes 19:00)'.black + nl +
     '    last month' + nl +
     '    last friday at 2pm' + nl +
     '    3 hours ago' + nl +
     '    2 weeks ago at 17' + nl +
     '    wednesday 2 weeks ago' + nl +
     '    2 months ago' + nl +
-    '    last week saturday morning (morning becomes 06:00)' + nl +
-    '  note: "human" format can be used instead of date-time' + nl +
-    '  note: it is not possible to express duration with "human" format (e.g. "from 2 to 3 this morining")' + nl +
-    '  note: it is recommended to avoid human format, as it may yield unexpected results' + nl +
+    '    last week saturday morning ' + '(morning becomes 06:00)'.black + nl +
+    '  note: "human" format can be used instead of date-time'.grey + nl +
+    '  note: it is not possible to express duration with "human" format (e.g. "from 2 to 3 this morining")'.grey + nl +
+    '  note: it is recommended to avoid human format, as it may yield unexpected results'.grey + nl +
     nl +
     '--------';
   }
@@ -278,9 +296,9 @@ var getQuerySync = function _getQuery() {
 
 
 /**
- *  Any number of params is allowed and --q can be omitted
- *  so we need to potentially combine --q and commands
- *  we also need to wrap phrases in quotes
+ *  Any number of params following --q is allowed and --q can be omitted
+ *  so we need to combine --q and commands for multi-term queries
+ *  We also need to wrap phrases in quotes
  *  NOTE: --q may originally have only a single phrase or a term
  *  e.g. with --q:
  *      logsene search --q response took --and --t 1d
@@ -325,7 +343,7 @@ var adjustQuery = function _adjustQuery() {
  * @private
  */
 var quoteIfPhrase = function _quoteIfPhrase(str) {
-  return str.indexOf(' ') > -1 ? wrapInQuotes(str) : str;
+  return str.toString().indexOf(' ') > -1 ? wrapInQuotes(str) : str;
 };
 
 
@@ -357,7 +375,7 @@ var getTimeFilterSync = function _getTimeFilterSync() {
 
   // first check whether user provided the time component (--t)
   if (!argv.t) {
-    // when not specified, default time is the last 60m
+    // if --t is not specified, default time is the last 60m
     var millisInHour      = 3600000,
         nowMinusHour      = Date.now() - millisInHour,
         defaultStartTime  = (new Date(nowMinusHour)).toISOString();
@@ -367,10 +385,8 @@ var getTimeFilterSync = function _getTimeFilterSync() {
   } else {
 
     // datetime param provided
-    var t = argv.t,
-        argvSep = argv.sep,
-        confSep = conf.getSync('rangeSeparator'),
-        sep = argvSep ? argvSep : (confSep ? confSep : '/');
+    var t = '' + argv.t,  // convert to string (if only digits: m = default)
+        sep = argv.sep || conf.getSync('rangeSeparator') || '/';
 
     out.trace('Range separator for this session: ' + sep);
 
