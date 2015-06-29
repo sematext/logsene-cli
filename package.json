@@ -1,6 +1,6 @@
 {
   "name": "logsene-cli",
-  "version": "1.0.1-alpha",
+  "version": "1.0.2-alpha",
   "description": "Logsene command-line interface",
   "main": "index.js",
   "preferGlobal": true,
@@ -32,6 +32,7 @@
     "async": "^1.2.1",
     "camel-case": "^1.1.2",
     "chalk": "^1.0.0",
+    "cli-table": "^0.3.1",
     "configstore": "^1.0.0",
     "elastic.js": "^1.2.0",
     "elasticsearch": "^4.1.0",
@@ -64,6 +65,7 @@
     "logsene": "./bin/logsene-cli"
   },
   "devDependencies": {
-    "mocha": "^2.2.5"
+    "chai": "*",
+    "mocha": "*"
   }
 }
