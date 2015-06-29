@@ -4,7 +4,6 @@
 
 var Command     = require('ronin').Command,
     forown      = require('lodash.forown'),
-    camelCase   = require('camel-case'),
     stringify   = require('safe-json-stringify'),
     argv        = require('../../lib/util').argv,
     out         = require('../../lib/util').out,
