@@ -5,7 +5,7 @@ Enables searching Logsene log entries from the command-line.
 Currently supports OS X and Linux.  
 
 ## Please note
-Still in Beta.
+Latest: 1.0.2-alpha, and you know what that means.
 
 ## Instalation
 
@@ -15,16 +15,17 @@ Still in Beta.
 
 ## Commands
 ### logsene search
+
 ```sh
 Usage: logsene search query [OPTIONS]
   where OPTIONS may be:
-    --q <query>        Query string (--q parameter can be omitted)
-    --op AND           OPTIONAL Overrides default OR operator
-    --t <interval>     OPTIONAL ISO 8601 datetime or duration or time range
-    --s <size>         OPTIONAL Number of matches to return. Defaults to 200
-    --o <offset>       OPTIONAL Number of matches to skip from the beginning. Defaults to 0
-    --json             OPTIONAL Returns JSON instead of TSV
-    --sep              OPTIONAL Sets the separator between two datetimes when specifying time range
+    --q <query>      Query string (--q parameter can be omitted)
+    --op AND         OPTIONAL Overrides default OR operator between multiple terms in a query
+    --t <interval>   OPTIONAL ISO 8601 datetime or duration or time range
+    --s <size>       OPTIONAL Number of matches to return. Defaults to 200
+    --o <offset>     OPTIONAL Number of matches to skip from the beginning. Defaults to 0
+    --json           OPTIONAL Returns JSON instead of TSV
+    --sep            OPTIONAL Sets the separator between two datetimes when specifying time range
 
 Examples:
   logsene search
@@ -47,11 +48,13 @@ Examples:
   logsene search --q "Server not responding"
       returns last 1h of log entries that contain the given phrase
 
-  logsene search --t 1y8M4d8h30m2s
-      returns all the log entries reaching back to
+  logsene search "rare thing" --t 1y8M4d8h30m2s
+      returns all the log entries that contain the phrase "rare thing" reaching back to
       1 year 8 months 4 days 8 hours 30 minutes and 2 seconds
-      note: any datetime component can be omitted (shown in the following two examples)
+      note: when specifying duration, any datetime designator character can be omitted
+            (shown in the following two examples)
       note: months must be specified with uppercase M (distinction from minutes)
+      note: minutes (m) are the default must be specified with uppercase M (distinction from minutes)
 
   logsene search --t 1h30m
       returns all the log entries from the last 1,5h
@@ -68,7 +71,7 @@ Examples:
       note: if a parameter contains spaces, it must be enclosed in quotes
 
   logsene search --t 2015-06-16T22:27:41/2015-06-18T22:27:41
-      returns all the log entries that were logged between provided timestamps
+      returns all the log entries that were logged between the two provided timestamps
       note: date range must either contain forward slash between datetimes,
             or a different range separator must be specified (shown in the next example)
 
@@ -79,11 +82,12 @@ Examples:
 
   logsene search --t "last Friday at 13/last Friday at 13:30"
       it is also possible to use "human language" to designate datetime
-      note: it may be used in place of datetime (e.g. "last friday between 12 and 14" is not allowed)
+      note: it may be used only in place of datetime. Expressing range is not allowed
+            (e.g. "last friday between 12 and 14" is not allowed)
       note: may yield unpredictable datetime values
 
   logsene search --q ERROR --s 20
-      returns at most 20 latest log entries with the term ERROR
+      returns at most 20 latest log entries (within the last hour) with the term ERROR
 
   logsene search ERROR --s 50 --o 20
       returns chronologically sorted hits 21st to 71st (offset=20)
@@ -102,6 +106,7 @@ Allowed datetime formats:
     YYYYMMDD HH:mm
     YYYYMMDDHH:mm
     YYYYMMDDHHmm
+    YYYYMMDDHHmm
   note: to use UTC instead of local time, append Z to datetime
   note: all datetime components are optional except date (YYYY, MM and DD)
         If not specified, component defaults to its lowest possible value
@@ -110,24 +115,37 @@ Allowed datetime formats:
 Allowed duration format:
   [Ny][NM][Nd][Nh][Nm][Ns]
   e.g.
-    1M1d42s
-  note: duration is specified as a series of number and time designator pairs, e.g. 1y2M8d22h8m48s
+    1y2M8d22h8m48s
+  note: uppercase M must be used for months, lowercase m for minutes
+  note: if only a number is specified, it defaults to minutes
 
-Allowed datetime range formats
-  range can be expressed in two ways, with datetime/datetime or with datetime/duration:
+Allowed range formats
+  range can be expressed in all datetime/duration combinations:
   datetime/datetime
-  datetime/{+|-}duration
-  where / is default range separator string and + or - sign is duration designator (examples listed below)
-    plus  (+) duration designator means that filter's end time will be constructed by adding duration to start time
-    minus (-) means that start time will be datetime - duration and end time will be what used to be start time
-    YYYY[-]MM[-]DD[T][HH[:MM[:SS]]]/YYYY[-]MM[-]DD[T][HH[:MM[:SS]]]
-    YYYY[-]MM[-]DD[T][HH[:MM[:SS]]]/+[Ny][NM][Nd][Nh][Nm][Ns]
-  e.g.
-    2015-06-23 17:45/2015-06-23 18:45
-    2015-06-23 17:45/-1M
-        gets translated to: 2015-05-23 17:45/2015-06-23 17:45
-    2015-06-23 17:45/+15m
-        gets translated to: 2015-06-23 17:45/2015-06-23 18:00
+  datetime/(+|-)duration
+  duration/(+|-)duration
+  duration/datetime
+  note: / is default range separator string and + or - sign is duration designator
+  note: duration must begin with either + or - when used in end of range position
+
+  The following table shows how ranges are calculated, given the different input parameters
+┌──────────────────────────────────────┬──────────────────────┬─────────────────────────┐
+│ --t parameter                        │ range start          │ range end               │
+├──────────────────────────────────────┼──────────────────────┼─────────────────────────┤
+│ 2016-06-24T18:42                     │ timestamp            │ now                     │
+├──────────────────────────────────────┼──────────────────────┼─────────────────────────┤
+│ 2016-06-24T18:42/2016-06-24T18:52:30 │ timestamp            │ timestamp               │
+├──────────────────────────────────────┼──────────────────────┼─────────────────────────┤
+│ 2016-06-24T18:42/+1d                 │ timestamp            │ timestamp + duration    │
+├──────────────────────────────────────┼──────────────────────┼─────────────────────────┤
+│ 2016-06-24T18:42/-1d                 │ timestamp - duration │ timestamp               │
+├──────────────────────────────────────┼──────────────────────┼─────────────────────────┤
+│ 2h30m8s                              │ now - duration       │ now                     │
+├──────────────────────────────────────┼──────────────────────┼─────────────────────────┤
+│ 2h/+1h                               │ now - first duration │ start + second duration │
+├──────────────────────────────────────┼──────────────────────┼─────────────────────────┤
+│ 5d10h25/2016-06-24T18:42             │ now - duration       │ timestamp               │
+└──────────────────────────────────────┴──────────────────────┴─────────────────────────┘
   note: all allowable datetime formats are also permitted when specifying ranges
   note: disallowed range separators:
        Y, y, M, D, d, H, h, m, S, s, -, +, P, p, T, t
