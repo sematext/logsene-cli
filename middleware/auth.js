@@ -176,14 +176,14 @@ function verifyAppKey(apiKey, cb) {
 
           conf.setSync('appKey', chosenApp.token);
           conf.setSync('appName', chosenApp.name);
-          out.info('Successfuly established Logsene application session.');
+          out.info('Successfuly established Logsene ' + chosenApp.name + ' application session.');
           return cb(null, true);
         });
       } else {
         // there's only one active Logsene app - use it without prompting the user
         conf.setSync('appKey', apps[0].token);
         conf.setSync('appName', apps[0].name);
-        out.info('Successfuly established Logsene application session.');
+        out.info('Successfuly established Logsene ' + apps[0].name + ' application session.');
         return cb(null, true);
       }
     });
