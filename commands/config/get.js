@@ -11,6 +11,7 @@ var Command     = require('ronin').Command,
     warnAndExit = require('../../lib/util').warnAndExit,
     dashCase    = require('../../lib/util').camelToDashCase,
     conf        = require('../../lib/config');
+                  require('colors');  // just bring in colors
 
 
 var Get = Command.extend({ use: ['session', 'auth'],
@@ -47,20 +48,19 @@ var Get = Command.extend({ use: ['session', 'auth'],
       getParam(param);
     });
 
-    process.exit(0); // bail out - that's it
+    process.exit(0); // baDil out - that's it
   },
 
   // returns usage help
   help: function _help() {
-    return 'Usage: logsene ' + this.name + ' [OPTIONS]\n' +
-        '  where OPTIONS may be:\n' +
-        '    --api-key\n' +
-        '    --app-key\n' +
-        '    --app-name\n'+
-        '    --range-separator (used to separate two datetimes when specifying time range)\n'+
-        '    --trace\n' +
-        '    --all (return listing of all params from the current user\'s session)\n\n' +
-        '--------';
+    return 'Usage: logsene config get [OPTION]'.bold +
+        '  Where OPTIONS may be:\n'.grey +
+        '    --api-key\n'.yellow +
+        '    --app-key\n'.yellow +
+        '    --app-name\n'.yellow +
+        '    --range-separator'.yellow + ' (used to separate two datetimes when specifying time range)\n'.grey+
+        '    --trace\n'.yellow +
+        '    --all'.yellow + ' (return listing of all params from the current user\'s session)\n\n'.grey;
   }
 });
 
