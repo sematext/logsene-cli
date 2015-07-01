@@ -13,7 +13,6 @@ var Command         = require('ronin').Command,
     JSONStream      = require('JSONStream'),
     eos             = require('end-of-stream'),
     Table           = require('cli-table'),
-    colors          = require('colors'),
     out             = require('../lib/util').out,
     argv            = require('../lib/util').argv,
     isDef           = require('../lib/util').isDef,
@@ -25,6 +24,7 @@ var Command         = require('ronin').Command,
     disallowedChars = require('../lib/time').disallowedChars,
     conf            = require('../lib/config'),
     api             = require('../lib/logsene-api');
+                      require('colors');  // just bring in colors
 
 var nl = '\n';
 
@@ -123,13 +123,14 @@ var Search = Command.extend({ use: ['session', 'auth'],
     });
 
     table.push(
-        ['2016-06-24T18:42', 'timestamp', 'now'],
-        ['2016-06-24T18:42/2016-06-24T18:52:30', 'timestamp', 'timestamp'],
-        ['2016-06-24T18:42/+1d', 'timestamp', 'timestamp + duration'],
-        ['2016-06-24T18:42/-1d', 'timestamp - duration', 'timestamp'],
-        ['2h30m8s', 'now - duration', 'now'],
-        ['2h/+1h', 'now - first duration', 'start + second duration'],
-        ['5d10h25/2016-06-24T18:42', 'now - duration', 'timestamp']
+        ['2016-06-24T18:42',                      'timestamp',                    'now'                 ],
+        ['2016-06-24T18:42/2016-06-24T18:52:30',  'timestamp',                    'timestamp'           ],
+        ['2016-06-24T18:42/+1d',                  'timestamp',                    'timestamp + duration'],
+        ['2016-06-24T18:42/-1d',                  'timestamp - duration',         'timestamp'           ],
+        ['2h30m8s',                               'now - duration',               'now'                 ],
+        ['2h/+1h',                                'now - duration1',              'start + duration2'   ],
+        ['2h/-1h',                                'now - duration1 - duration2',  'start + duration1'   ],
+        ['5d10h25/2016-06-24T18:42',              'now - duration',               'timestamp'           ]
     );
 
     return 'Usage: logsene search query [OPTIONS]'.bold + nl +
@@ -222,9 +223,20 @@ var Search = Command.extend({ use: ['session', 'auth'],
     '    YYYYMMDDHH:mm' + nl +
     '    YYYYMMDDHHmm' + nl +
     '    YYYYMMDDHHmm' + nl +
-    '  note: to use UTC instead of local time, append Z to datetime'.grey + nl +
-    '  note: all datetime components are optional except date (YYYY, MM and DD)'.grey + nl +
-    '        If not specified, component defaults to its lowest possible value'.grey + nl +
+    '    YYYY-MM-DD' + nl +
+    '    YYYYMMDD' + nl +
+    '    YYYY-MM-DD HHmm' + nl +
+    '    YYYYMMDD HHmm' + nl +
+    '    YYYY-MM-DDTHHmm' + nl +
+    '    YYYYMMDDTHH:mm' + nl +
+    '    YYYYMMDDTHHmm' + nl +
+    '    YYYYMMDDTHH:mm' + nl +
+    '    YYYY-MM-DDTHHmmss' + nl +
+    '    YYYYMMDDHHmmss' + nl +
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                '    YYYYMMDDTHHmmss' + nl +
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                '  note: to use UTC instead of local time, append Z to datetime'.grey + nl +
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                '  note: all datetime components are optional except date (YYYY, MM and DD)'.grey + nl +
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                '        If not specified, component defaults to its lowest possible value'.grey + nl +
     '  note: date part may be separated from time by T (ISO-8601), space or nothing at all'.grey + nl +
     nl +
     'Allowed duration format:'.green + nl +
@@ -273,7 +285,7 @@ var Search = Command.extend({ use: ['session', 'auth'],
 /**
  * Assembles ejs query according to query entered by the user
  * It checks whether user entered one or more terms or a phrase?
- * It also checks whether the default operator OR is overridden
+ * It also checks whether the default operator, OR, is overridden
  * @returns assembled ejs query
  * @private
  */
