@@ -11,6 +11,7 @@ var Command     = require('ronin').Command,
     enableTrace = require('../../lib/util').enableTrace,
     warnAndExit = require('../../lib/util').warnAndExit,
     conf        = require('../../lib/config');
+                  require('colors');  // just bring in colors
 
 
 var Set = Command.extend({ use: ['session', 'auth'],
@@ -33,7 +34,6 @@ var Set = Command.extend({ use: ['session', 'auth'],
 
     if (isEmpty(argv['api-key'])
         && isEmpty(argv['app-key'])
-        && isEmpty(argv['app-name'])
         && isEmpty(argv['range-separator'])
         && isEmpty(argv['trace'])) {
       warnAndExit('No known parameters specified.', this);
@@ -60,32 +60,31 @@ var Set = Command.extend({ use: ['session', 'auth'],
 
   // returns usage help
   help: function _help() {
-    return 'Usage: logsene ' + this.name + ' [OPTIONS]\n' +
-        '  where OPTIONS may be:\n' +
-        '    --api-key <apiKey>\n' +
-        '    --app-key <appKey>\n' +
-        '    --app-name <appName>\n'+
-        '    --range-separator <sep>\n'+
-        '    --trace <true|false>\n' +
+    return 'Usage: logsene config set [OPTIONS]\n'.bold +
+        '  where OPTIONS may be:\n'.grey +
+        '    --api-key <apiKey>\n'.yellow +
+        '    --app-key <appKey>\n'.yellow +
+        '    --range-separator <sep>\n'.yellow +
+        '    --trace <true|false>\n'.yellow +
         '\n' +
-        'It is not necessary to explicitly set api-key, app-key nor app-name.\n' +
-        'logsene-cli will ask you to log in and choose Logsene application\n' +
+        'It is not necessary to explicitly set api-key nor app-key.\n' +
+        'Logsene CLI will ask you to log in and choose Logsene application\n' +
         'if keys are missing from the configuration\n' +
-        'Examples:\n' +
-        '  logsene ' + this.name + ' --api-key 11111111-1111-1111-1111-111111111111\n' +
-        '      sets the api key for the current session\n' +
+        'Examples:\n'.underline.green +
+        '  logsene config set --api-key 11111111-1111-1111-1111-111111111111\n'.blue +
+        '      sets the api key for the current session\n'.grey +
         '\n' +
-        '  logsene ' + this.name + ' --app-key 22222222-2222-2222-2222-222222222222\n' +
-        '      sets Logsene application key for the current session\n' +
+        '  logsene config set --app-key 22222222-2222-2222-2222-222222222222\n'.blue +
+        '      sets Logsene application key for the current session\n'.grey +
         '\n' +
-        '  logsene ' + this.name + ' --range-separator TO\n' +
-        '      sets default separator of two datetimes for time ranges (default is /, as per ISO6801)\n' +
+        '  logsene config set --range-separator TO\n'.blue +
+        '      sets default separator of two datetimes for time ranges (default is /, as per ISO6801)\n'.grey +
         '\n' +
-        '  logsene ' + this.name + ' --trace [true]\n' +
-        '      activates tracing for the current session (true can be omitted)\n' +
+        '  logsene config set --trace [true]\n'.blue +
+        '      activates tracing for the current session (true can be omitted)\n'.grey +
         '\n' +
-        '  logsene ' + this.name + ' --trace false\n' +
-        '      deactivates tracing for the current session\n' +
+        '  logsene config set --trace false\n'.blue +
+        '      deactivates tracing for the current session\n'.grey +
         '\n' +
         '--------';
   }
