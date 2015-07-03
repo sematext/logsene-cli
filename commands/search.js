@@ -41,6 +41,7 @@ var Search = Command.extend({ use: ['session', 'auth'],
 
     var opts = {
       appKey:   conf.getSync('appKey'),
+      fields:   argv.f,
       size:     argv.s || conf.getSync('defaultSize') || conf.maxHits,
       offset:   argv.o || 0,
       logLevel: isSOBT(conf.getSync('trace')) ? 'trace' : 'error',
@@ -64,7 +65,7 @@ var Search = Command.extend({ use: ['session', 'auth'],
 
       jsonExtractor._transform = function _jsonTransform(data, encoding, next) {
         var source = isDef(data['_source']) ? data['_source'] : data;
-
+        if (data.fields) source = data.fields;
         this.push(source);
         hitCnt++;
         next();
@@ -73,6 +74,7 @@ var Search = Command.extend({ use: ['session', 'auth'],
 
       tsvExtractor._transform = function _tsvTransform(data, encoding, next) {
         var source = isDef(data['_source']) ? data['_source'] : data;
+        if (data.fields) source = data.fields;
         var output = '';
 
         forEach(values(source), function _forEachValue(v) {
