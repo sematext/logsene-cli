@@ -24,8 +24,8 @@ Usage: logsene search query [OPTIONS]
     -t <interval>   OPTIONAL ISO 8601 datetime or duration or time range
     -s <size>       OPTIONAL Number of matches to return. Defaults to 200
     -o <offset>     OPTIONAL Number of matches to skip from the beginning. Defaults to 0
-    --json           OPTIONAL Returns JSON instead of TSV
-    --sep            OPTIONAL Sets the separator between two datetimes when specifying time range
+    --json          OPTIONAL Returns JSON instead of TSV
+    --sep           OPTIONAL Sets the separator between two datetimes when specifying time range
 
 Examples:
   logsene search
@@ -130,7 +130,7 @@ Allowed range formats
 
   The following table shows how ranges are calculated, given the different input parameters
 ┌──────────────────────────────────────┬──────────────────────┬─────────────────────────┐
-│ -t parameter                        │ range start          │ range end               │
+│ -t parameter                         │ range start          │ range end               │
 ├──────────────────────────────────────┼──────────────────────┼─────────────────────────┤
 │ 2016-06-24T18:42                     │ timestamp            │ now                     │
 ├──────────────────────────────────────┼──────────────────────┼─────────────────────────┤
