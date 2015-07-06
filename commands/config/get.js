@@ -8,10 +8,11 @@ var Command     = require('ronin').Command,
     argv        = require('../../lib/util').argv,
     out         = require('../../lib/util').out,
     isEmpty     = require('../../lib/util').isEmpty,
+    camelCase   = require('../../lib/util').camelCase,
     warnAndExit = require('../../lib/util').warnAndExit,
     dashCase    = require('../../lib/util').camelToDashCase,
     conf        = require('../../lib/config');
-                  require('colors');  // just bring in colors
+    require('colors');  // just bring in colors
 
 
 var Get = Command.extend({ use: ['session', 'auth'],
@@ -35,8 +36,8 @@ var Get = Command.extend({ use: ['session', 'auth'],
     }
 
     var getParam = function _getParam(paramName) {
-      if (!isEmpty(argv[dashCase(paramName)])) {
-        out.info(paramName + ': ' + conf.getSync(paramName));
+      if (!isEmpty(argv[paramName])) {
+        out.info(paramName + ': ' + conf.getSync(camelCase(paramName)));
         process.exit(0);  // only a single param per get command (or use get --all)
       }
     };
@@ -48,7 +49,9 @@ var Get = Command.extend({ use: ['session', 'auth'],
       getParam(param);
     });
 
-    process.exit(0); // baDil out - that's it
+    // if we are here, not one known param hit
+    out.warn('The provided parameter was not found');
+    process.exit(0); // bail out - that's it
   },
 
   // returns usage help
@@ -58,6 +61,7 @@ var Get = Command.extend({ use: ['session', 'auth'],
         '    --api-key\n'.yellow +
         '    --app-key\n'.yellow +
         '    --app-name\n'.yellow +
+        '    --default-size\n'.yellow + ' (sets the default number of hits returned for the current session)\n'.grey+
         '    --range-separator'.yellow + ' (used to separate two datetimes when specifying time range)\n'.grey+
         '    --trace\n'.yellow +
         '    --all'.yellow + ' (return listing of all params from the current user\'s session)\n\n'.grey;

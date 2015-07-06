@@ -3,11 +3,11 @@
 /* global module, process, console, require */
 
 var Command     = require('ronin').Command,
-    camelCase   = require('camel-case'),
     stringify   = require('safe-json-stringify'),
     argv        = require('../../lib/util').argv,
     isEmpty     = require('../../lib/util').isEmpty,
     out         = require('../../lib/util').out,
+    camelCase   = require('../../lib/util').camelCase,
     enableTrace = require('../../lib/util').enableTrace,
     warnAndExit = require('../../lib/util').warnAndExit,
     conf        = require('../../lib/config');
@@ -34,6 +34,7 @@ var Set = Command.extend({ use: ['session', 'auth'],
 
     if (isEmpty(argv['api-key'])
         && isEmpty(argv['app-key'])
+        && isEmpty(argv['default-size'])
         && isEmpty(argv['range-separator'])
         && isEmpty(argv['trace'])) {
       warnAndExit('No known parameters specified.', this);
@@ -41,7 +42,7 @@ var Set = Command.extend({ use: ['session', 'auth'],
 
     var setParam = function _setParam(paramName) {
       if (!isEmpty(argv[paramName])) {
-        conf.setSync(paramName, argv[paramName]);
+        conf.setSync(camelCase(paramName), argv[paramName]);
         out.info('Successfuly set ' + paramName + ' to ' + argv[paramName]);
       }
     };
@@ -51,7 +52,7 @@ var Set = Command.extend({ use: ['session', 'auth'],
     // with which param the set command was called
     // so I have to check them all
     conf.getAvailableParams().forEach(function _forEachParam(param) {
-      setParam(camelCase(param));
+      setParam(param);
     });
 
 
@@ -64,6 +65,7 @@ var Set = Command.extend({ use: ['session', 'auth'],
         '  where OPTIONS may be:\n'.grey +
         '    --api-key <apiKey>\n'.yellow +
         '    --app-key <appKey>\n'.yellow +
+        '    --default-size <size>\n'.yellow +
         '    --range-separator <sep>\n'.yellow +
         '    --trace <true|false>\n'.yellow +
         '\n' +
@@ -76,6 +78,9 @@ var Set = Command.extend({ use: ['session', 'auth'],
         '\n' +
         '  logsene config set --app-key 22222222-2222-2222-2222-222222222222\n'.blue +
         '      sets Logsene application key for the current session\n'.grey +
+        '\n' +
+        '  logsene config set --default-size 3000\n'.blue +
+        '      sets default number of hits returned for the current session (overrides the default 200)\n'.grey +
         '\n' +
         '  logsene config set --range-separator TO\n'.blue +
         '      sets default separator of two datetimes for time ranges (default is /, as per ISO6801)\n'.grey +
