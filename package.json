@@ -5,7 +5,7 @@
   "main": "index.js",
   "preferGlobal": true,
   "scripts": {
-    "test": "echo \"No tests yet\" && exit 0"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
