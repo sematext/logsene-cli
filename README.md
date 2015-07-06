@@ -5,25 +5,51 @@ Enables searching Logsene log entries from the command-line.
 Currently supports OS X and Linux.  
 
 ## Please note
-Latest: 1.0.2-alpha, and you know what that means.
+Latest: 1.0.3-alpha (you know what that means, no production use please).
 
 ## Installation
 
 `git clone https://github.com/sematext/logsene-cli.git`  
 `cd logsene-cli && npm install`  
-`npm link`
+`npm link`  
+
+
+## 
+
+
+## Logsene CLI Session
+We define L-CLI session as a set of commands issued by the user, with no more than 30m between them. 
+Every session has a set of configuration parameters that control the way L-CLI behaves. 
+E.g. which Sematext account is used (--api-key); which Logsene application is used (--app-key); 
+is tracing information going to be displayed (--trace). 
+
+For controlling those settings, we use `config set` and `config get` commands.
+For convenience reasons, you don't have to deal with API and APP keys manually. 
+L-CLI automatically retrieves both keys on each session start, 
+as users login (--api-key) and choose Logsene application (--app-key).
+L-CLI then writes those parameters to the session configuration store and 
+reuses them on each subsequent command, until the session times out.
+
+![Login image]()
+
+The session primitives were introduced in order to enable frictionless multi-user experience, 
+where all users may possibly be accessing L-CLI from the same box (while being SSHd into it), 
+using the same Sematext account and possibly even the same Logsene application, 
+L-CLI keeps each session alive for 30m. After the session times out, user needs to repeat the login process.
+
 
 ## Commands
 ### logsene search
 
-```sh
+```
 Usage: logsene search query [OPTIONS]
   where OPTIONS may be:
-    -q <query>      Query string (-q parameter can be omitted)
-    -op AND         OPTIONAL Overrides default OR operator between multiple terms in a query
+    -q <query>      OPTIONAL Query string (-q parameter can be omitted)
+    -f <fields>     OPTIONAL Fields to return (defaults to all fields)
     -t <interval>   OPTIONAL ISO 8601 datetime or duration or time range
     -s <size>       OPTIONAL Number of matches to return. Defaults to 200
     -o <offset>     OPTIONAL Number of matches to skip from the beginning. Defaults to 0
+    -op AND         OPTIONAL Overrides default OR operator between multiple terms in a query
     --json          OPTIONAL Returns JSON instead of TSV
     --sep           OPTIONAL Sets the separator between two datetimes when specifying time range
 
@@ -63,11 +89,11 @@ Examples:
       equivalent to the previous example (default time unit is minute)
 
   logsene search -t 2015-06-20T20:48
-      returns all the log entries that were logged after the provided datetime
+      returns all the log entries that were logged since the provided datetime
       note: allowed formats listed at the bottom of this help message
 
   logsene search -t "2015-06-20 20:28"
-      returns all the log entries that were logged after the provided datetime
+      returns all the log entries that were logged since the provided datetime
       note: if a parameter contains spaces, it must be enclosed in quotes
 
   logsene search -t 2015-06-16T22:27:41/2015-06-18T22:27:41
@@ -79,11 +105,15 @@ Examples:
       same as previous command, except it sets the custom string separator that denotes a range
       note: default separator is the forward slash (as per ISO-8601)
       note: if a parameter contains spaces, it must be enclosed in quotes
+      
+  logsene config set --range-separator " TO "
+      sets the range separator for the current session
 
   logsene search -t "last Friday at 13/last Friday at 13:30"
-      it is also possible to use "human language" to designate datetime
-      note: it may be used only in place of datetime. Expressing range is not allowed
-            (e.g. "last friday between 12 and 14" is not allowed)
+      example shows how to use "human language" to designate datetime
+      note: it may be used only in place of datetime. 
+            Expressing range with human language is not allowed
+            (e.g. "last friday between 12 and 14" - not allowed)
       note: may yield unpredictable datetime values
 
   logsene search -q ERROR -s 20
@@ -104,13 +134,17 @@ Allowed datetime formats:
     YYYY-MM-DDHH:mm
     YYYYMMDDTHH:mm
     YYYYMMDD HH:mm
-    YYYYMMDDHH:mm
-    YYYYMMDDHHmm
-    YYYYMMDDHHmm
-  note: to use UTC instead of local time, append Z to datetime
-  note: all datetime components are optional except date (YYYY, MM and DD)
-        If not specified, component defaults to its lowest possible value
-  note: date part may be separated from time by T (ISO-8601), space or nothing at all
+    YYYY-MM-DD
+    YYYYMMDD
+    YYYY-MM-DD HHmm
+    YYYYMMDD HHmm
+    YYYY-MM-DDTHHmm
+    YYYYMMDDTHH:mm
+    YYYYMMDDTHHmm
+    YYYYMMDDTHH:mm
+    YYYY-MM-DDTHHmmss
+    YYYYMMDDHHmmss
+  note: date part may be separated from time by T (ISO-8601) or space
 
 Allowed duration format:
   [Ny][NM][Nd][Nh][Nm][Ns]
@@ -129,23 +163,25 @@ Allowed range formats
   note: duration must begin with either + or - when used in end of range position
 
   The following table shows how ranges are calculated, given the different input parameters
-┌──────────────────────────────────────┬──────────────────────┬─────────────────────────┐
-│ -t parameter                         │ range start          │ range end               │
-├──────────────────────────────────────┼──────────────────────┼─────────────────────────┤
-│ 2016-06-24T18:42                     │ timestamp            │ now                     │
-├──────────────────────────────────────┼──────────────────────┼─────────────────────────┤
-│ 2016-06-24T18:42/2016-06-24T18:52:30 │ timestamp            │ timestamp               │
-├──────────────────────────────────────┼──────────────────────┼─────────────────────────┤
-│ 2016-06-24T18:42/+1d                 │ timestamp            │ timestamp + duration    │
-├──────────────────────────────────────┼──────────────────────┼─────────────────────────┤
-│ 2016-06-24T18:42/-1d                 │ timestamp - duration │ timestamp               │
-├──────────────────────────────────────┼──────────────────────┼─────────────────────────┤
-│ 2h30m8s                              │ now - duration       │ now                     │
-├──────────────────────────────────────┼──────────────────────┼─────────────────────────┤
-│ 2h/+1h                               │ now - first duration │ start + second duration │
-├──────────────────────────────────────┼──────────────────────┼─────────────────────────┤
-│ 5d10h25/2016-06-24T18:42             │ now - duration       │ timestamp               │
-└──────────────────────────────────────┴──────────────────────┴─────────────────────────┘
+┌──────────────────────────────────────┬─────────────────────────────┬──────────────────────┐
+│ -t parameter                         │ range start                 │ range end            │
+├──────────────────────────────────────┼─────────────────────────────┼──────────────────────┤
+│ 2016-06-24T18:42                     │ timestamp                   │ now                  │
+├──────────────────────────────────────┼─────────────────────────────┼──────────────────────┤
+│ 2016-06-24T18:42/2016-06-24T18:52:30 │ timestamp                   │ timestamp            │
+├──────────────────────────────────────┼─────────────────────────────┼──────────────────────┤
+│ 2016-06-24T18:42/+1d                 │ timestamp                   │ timestamp + duration │
+├──────────────────────────────────────┼─────────────────────────────┼──────────────────────┤
+│ 2016-06-24T18:42/-1d                 │ timestamp - duration        │ timestamp            │
+├──────────────────────────────────────┼─────────────────────────────┼──────────────────────┤
+│ 2h30m8s                              │ now - duration              │ now                  │
+├──────────────────────────────────────┼─────────────────────────────┼──────────────────────┤
+│ 2h/+1h                               │ now - duration1             │ start + duration2    │
+├──────────────────────────────────────┼─────────────────────────────┼──────────────────────┤
+│ 2h/-1h                               │ now - duration1 - duration2 │ now - duration1      │
+├──────────────────────────────────────┼─────────────────────────────┼──────────────────────┤
+│ 5d10h25/2016-06-24T18:42             │ now - duration              │ timestamp            │
+└──────────────────────────────────────┴─────────────────────────────┴──────────────────────┘
   note: all allowable datetime formats are also permitted when specifying ranges
   note: disallowed range separators:
        Y, y, M, D, d, H, h, m, S, s, -, +, P, p, T, t
@@ -161,37 +197,24 @@ Allowed "human" formats:
     wednesday 2 weeks ago
     2 months ago
     last week saturday morning (morning becomes 06:00)
-  note: "human" format can be used instead of date-time
+  note: "human" format can only be used instead of date-time
   note: it is not possible to express duration with "human" format (e.g. "from 2 to 3 this morining")
   note: it is recommended to avoid human format, as it may yield unexpected results
 ```
 
-### logsene config get
-
-```sh
-Usage: logsene config get [OPTIONS]
-  where OPTIONS may be:
-    --api-key
-    --app-key
-    --app-name
-    --range-separator (used to separate two datetimes when specifying time range)
-    --trace
-    --all (return listing of all params from the current user's session)
-```
-
 ### logsene config set
 
-```sh
+```
 Usage: logsene config set [OPTIONS]
   where OPTIONS may be:
     --api-key <apiKey>
     --app-key <appKey>
-    --app-name <appName>
+    --default-size <size>
     --range-separator <sep>
     --trace <true|false>
 
-It is not necessary to explicitly set api-key, app-key nor app-name.
-logsene-cli will ask you to log in and choose Logsene application
+It is not necessary to explicitly set api-key nor app-key.
+Logsene CLI will ask you to log in and choose Logsene application
 if keys are missing from the configuration
 Examples:
   logsene config set --api-key 11111111-1111-1111-1111-111111111111
@@ -199,6 +222,9 @@ Examples:
 
   logsene config set --app-key 22222222-2222-2222-2222-222222222222
       sets Logsene application key for the current session
+
+  logsene config set --default-size 3000
+      sets default number of hits returned for the current session (overrides the default 200)
 
   logsene config set --range-separator TO
       sets default separator of two datetimes for time ranges (default is /, as per ISO6801)
@@ -208,4 +234,18 @@ Examples:
 
   logsene config set --trace false
       deactivates tracing for the current session
+```
+
+
+### logsene config get
+
+```
+Usage: logsene config get [OPTION]  Where OPTION may be:
+    --api-key
+    --app-key
+    --app-name
+    --default-size (sets the default number of hits returned for the current session)
+    --range-separator (used to separate start and end of a time range)
+    --trace
+    --all (return listing of all params from the current user's session)
 ```
