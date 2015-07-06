@@ -42,13 +42,18 @@ var Search = Command.extend({ use: ['session', 'auth'],
     var opts = {
       appKey:   conf.getSync('appKey'),
       fields:   argv.f,
-      size:     argv.s || conf.getSync('defaultSize') || conf.maxHits,
       offset:   argv.o || 0,
       logLevel: isSOBT(conf.getSync('trace')) ? 'trace' : 'error',
       body:     ejs.Request()
                   .query(ejs.FilteredQuery(getQuerySync(), getTimeFilterSync()))
                   .sort('@timestamp', 'asc')
     };
+
+    var size = argv.s || conf.getSync('defaultSize') || conf.maxHits;
+    if (!isSOBT(size)) {
+      opts.size = size;
+    }
+
 
     out.trace('Search: sending to logsene-api:' + nl + stringify(opts));
 
@@ -258,7 +263,7 @@ var Search = Command.extend({ use: ['session', 'auth'],
     '  note: disallowed range separators:'.grey + nl +
     '       ' + disallowedChars.join(', ').grey + nl +
     nl +
-    'Allowed "human" formats:'.green + nl +
+    'Allowed "human" formats (all in local time):'.green + nl +
     '    10 minutes ago' + nl +
     '    yesterday at 12:30pm' + nl +
     '    last night ' + '(night becomes 19:00)'.black + nl +
