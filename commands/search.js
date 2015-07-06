@@ -138,12 +138,13 @@ var Search = Command.extend({ use: ['session', 'auth'],
     return 'Usage: logsene search query [OPTIONS]'.bold + nl +
     '  where OPTIONS may be:'.grey + nl +
     '    -q <query>    '.yellow + '  Query string (-q parameter can be omitted)' + nl +
-    '    -op AND       '.yellow + '  OPTIONAL Overrides default OR operator between multiple terms in a query' + nl +
+    '    -f <fields>   '.yellow + '  OPTIONAL Fields to return (defaults to all fields)' + nl +
     '    -t <interval> '.yellow + '  OPTIONAL ISO 8601 datetime or duration or time range' + nl +
     '    -s <size>     '.yellow + '  OPTIONAL Number of matches to return. Defaults to ' + conf.maxHits + '' + nl +
     '    -o <offset>   '.yellow + '  OPTIONAL Number of matches to skip from the beginning. Defaults to 0' + nl +
-    '    --json         '.yellow + '  OPTIONAL Returns JSON instead of TSV' + nl +
-    '    --sep          '.yellow + '  OPTIONAL Sets the separator between two datetimes when specifying time range' + nl +
+    '    -op AND       '.yellow + '  OPTIONAL Overrides default OR operator between multiple terms in a query' + nl +
+    '    --json        '.yellow + '  OPTIONAL Returns JSON instead of TSV' + nl +
+    '    --sep         '.yellow + '  OPTIONAL Sets the separator between two datetimes when specifying time range' + nl +
     nl +
     'Examples:'.underline.green + nl +
     '  logsene search'.blue + nl +
@@ -222,9 +223,6 @@ var Search = Command.extend({ use: ['session', 'auth'],
     '    YYYY-MM-DDHH:mm' + nl +
     '    YYYYMMDDTHH:mm' + nl +
     '    YYYYMMDD HH:mm' + nl +
-    '    YYYYMMDDHH:mm' + nl +
-    '    YYYYMMDDHHmm' + nl +
-    '    YYYYMMDDHHmm' + nl +
     '    YYYY-MM-DD' + nl +
     '    YYYYMMDD' + nl +
     '    YYYY-MM-DD HHmm' + nl +
@@ -235,11 +233,7 @@ var Search = Command.extend({ use: ['session', 'auth'],
     '    YYYYMMDDTHH:mm' + nl +
     '    YYYY-MM-DDTHHmmss' + nl +
     '    YYYYMMDDHHmmss' + nl +
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                '    YYYYMMDDTHHmmss' + nl +
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                '  note: to use UTC instead of local time, append Z to datetime'.grey + nl +
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                '  note: all datetime components are optional except date (YYYY, MM and DD)'.grey + nl +
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                '        If not specified, component defaults to its lowest possible value'.grey + nl +
-    '  note: date part may be separated from time by T (ISO-8601), space or nothing at all'.grey + nl +
+    '  note: date part may be separated from time by T (ISO-8601) or space'.grey + nl +
     nl +
     'Allowed duration format:'.green + nl +
     '  [Ny][NM][Nd][Nh][Nm][Ns]'.yellow + nl +
@@ -275,7 +269,7 @@ var Search = Command.extend({ use: ['session', 'auth'],
     '    wednesday 2 weeks ago' + nl +
     '    2 months ago' + nl +
     '    last week saturday morning ' + '(morning becomes 06:00)'.black + nl +
-    '  note: "human" format can be used instead of date-time'.grey + nl +
+    '  note: "human" format can only be used instead of date-time'.grey + nl +
     '  note: it is not possible to express duration with "human" format (e.g. "from 2 to 3 this morining")'.grey + nl +
     '  note: it is recommended to avoid human format, as it may yield unexpected results'.grey + nl +
     nl +
