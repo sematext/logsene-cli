@@ -5,28 +5,30 @@ Enables searching Logsene log entries from the command-line.
 Currently supports OS X and Linux.  
 
 ## Please note
-Latest: 1.0.3-alpha (you know what that means, no production use please).
+Latest: `1.0.3-alpha` (you know what that means, no production use please).
 
 ## Installation
+
+`npm install logsene-cli -g`
+
+or
 
 `git clone https://github.com/sematext/logsene-cli.git`  
 `cd logsene-cli && npm install`  
 `npm link`  
 
 
-## 
-
 
 ## Logsene CLI Session
 We define L-CLI session as a set of commands issued by the user, with no more than 30m between them. 
 Every session has a set of configuration parameters that control the way L-CLI behaves. 
-E.g. which Sematext account is used (--api-key); which Logsene application is used (--app-key); 
+E.g. which Sematext account is used (`--api-key`); which Logsene application is used (`--app-key`); 
 is tracing information going to be displayed (--trace). 
 
-For controlling those settings, we use `config set` and `config get` commands.
+or controlling those settings, we use `config set` and `config get` commands.
 For convenience reasons, you don't have to deal with API and APP keys manually. 
 L-CLI automatically retrieves both keys on each session start, 
-as users login (--api-key) and choose Logsene application (--app-key).
+as users login (`--api-key`) and choose Logsene application (`--app-key`).
 L-CLI then writes those parameters to the session configuration store and 
 reuses them on each subsequent command, until the session times out.
 
