@@ -43,11 +43,13 @@ What's new in Logsene:
   - CoreOS Log Collection
   - REST API
 
+## Logsene CLI
+
 Logsene CLI gives you capability to search through your logs from the command-line, which brings the awesome
 benefit of being able to pipe results to `awk`, `sed`, `cu`, `sort`, `head` and other *nix command-line friends.  
 
-Imagine a situation where you suspect that your site were under a DoS attack, you might be interested in quickly 
-seeing the top offenders.
+Imagine a situation where you suspected that your site were under a DoS attack.  
+You'd be interested in quickly finding out the top offenders. 
 Here’s a one-liner that shows top originating IP addresses in he last 10 minutes (also shows how to use the `-f` 
 switch to specify which field(s) to return - field host, in this example):
 
@@ -55,6 +57,8 @@ switch to specify which field(s) to return - field host, in this example):
 
 ![Top IPs](http://i1329.photobucket.com/albums/w548/mbonaci/Sematext%20L-CLI%20README/3hsortuniqhead_zpshtafj67j.png)
 
+You can find more useful examples in [the blog post](http://blog.sematext.com/2015/07/07/logsene-cli/) 
+that announced the release of Logsene CLI.
 
 ## Logsene CLI Session
 We define L-CLI session as a set of commands issued by the user, with no more than 30m between them. 
