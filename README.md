@@ -17,6 +17,27 @@ or
 `cd logsene-cli && npm install`  
 `npm link`  
 
+To test, simply run:
+
+`npm test`
+
+## Logsene
+Logsene is a centralized log management solution. You basically upload your logs in bulk or real-time
+from all your servers. Those logs are then aggregated by time and shown in the Logsene web application.
+
+
+![Logsene Web APP](http://i1329.photobucket.com/albums/w548/mbonaci/Sematext%20L-CLI%20README/Logsene-web-app_zpsudvdspo4.png)
+
+Logsene CLI gives you capability to search through your logs from the command-line, which brings the awesome
+benefit of being able to pipe results to `awk`, `sed`, `cu`, `sort`, `head` and other *nix command-line friends.  
+
+If you suspect that your site were under a DoS attack, you might be interested in quickly seeing the top offenders.
+Here’s a one-liner that shows top originating IP addresses in he last 10 minutes (also shows how to use the `-f` 
+switch to specify which field(s) to return - field host, in this example):
+
+`$ logsene search -t 10m -f host | sort | uniq -c | sort -r | head -n20`
+
+![Top IPs](http://i1329.photobucket.com/albums/w548/mbonaci/Sematext%20L-CLI%20README/3hsortuniqhead_zpshtafj67j.png)
 
 
 ## Logsene CLI Session
@@ -32,7 +53,7 @@ as users login (`--api-key`) and choose Logsene application (`--app-key`).
 L-CLI then writes those parameters to the session configuration store and 
 reuses them on each subsequent command, until the session times out.
 
-![Login image]()
+![Login image](http://i1329.photobucket.com/albums/w548/mbonaci/Sematext%20L-CLI%20README/login-new_zpsophwegzo.png)
 
 The session primitives were introduced in order to enable frictionless multi-user experience, 
 where all users may possibly be accessing L-CLI from the same box (while being SSHd into it), 
