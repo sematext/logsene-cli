@@ -5,7 +5,7 @@ Enables searching Logsene log entries from the command-line.
 Currently supports OS X and Linux.  
 
 ## Please note
-Latest: `1.0.3-alpha` (you know what that means, no production use please).
+Latest: `1.0.7-alpha` (you know what that means, no production use please).
 
 ## Installation
 
