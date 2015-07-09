@@ -4,9 +4,6 @@
 Enables searching Logsene log entries from the command-line.
 Currently supports OS X and Linux.  
 
-## Please note
-Latest: `1.0.7-alpha` (you know what that means, no production use please).
-
 ## Installation
 
 `npm install logsene-cli -g`
@@ -22,8 +19,7 @@ To test, simply run:
 `npm test`
 
 ## Logsene
-[Logsene](http://sematext.com/logsene) is a centralized log management solution. You basically upload your logs in bulk or real-time
-from all your servers. Those logs are then aggregated by time and shown in the Logsene web application, 
+[Logsene](http://sematext.com/logsene) is a centralized log management solution. You basically upload your logs in bulk or real-time from all your servers. Those logs are then aggregated by time and shown in the Logsene web application,
 where you have the ability to search for specific terms, narrow down time ranges, filter fields, setup alerts, ...
 
 ![Logsene Web APP](http://i1329.photobucket.com/albums/w548/mbonaci/Sematext%20L-CLI%20README/Logsene-web-app_zpsudvdspo4.png)
@@ -35,51 +31,42 @@ A quick rundown of most notable features of Logsene:
   - Be up and running within minutes -- there is nothing to install or maintain
   - Log Alerts & Anomaly Detection
   - Saved Searches
-  
-What's new in Logsene:
-
   - Scheduled Reporting
-  - Integrated Kibana 4
   - CoreOS Log Collection
+  - Docker container monitoring
   - REST API
 
 ## Logsene CLI
 
-Logsene CLI gives you capability to search through your logs from the command-line, which brings the awesome
-benefit of being able to pipe results to `awk`, `sed`, `cu`, `sort`, `head` and other *nix command-line friends.  
+Logsene CLI gives you capability to search through your logs from the command-line, which brings the awesome benefit of being able to pipe results to `awk`, `sed`, `cut`, `sort`, `head` and friends from the *nix command-line.  
 
 Imagine a situation where you suspected that your site were under a DoS attack.  
-You'd be interested in quickly finding out the top offenders. 
-Here’s a one-liner that shows top originating IP addresses in he last 10 minutes (also shows how to use the `-f` 
-switch to specify which field(s) to return - field host, in this example):
+You'd be interested in quickly finding out the top offenders.
+Here’s a one-liner that shows top originating IP addresses in he last 10 minutes (also shows how to use the `-f` switch to specify which field(s) to return - field `host`, in this example):
 
 `$ logsene search -t 10m -f host | sort | uniq -c | sort -r | head -n20`
 
 ![Top IPs](http://i1329.photobucket.com/albums/w548/mbonaci/Sematext%20L-CLI%20README/3hsortuniqhead_zpshtafj67j.png)
 
-You can find more useful examples in [the blog post](http://blog.sematext.com/2015/07/07/logsene-cli/) 
+You can find more useful examples in [the blog post](http://blog.sematext.com/2015/07/07/logsene-cli/)
 that announced the release of Logsene CLI.
 
 ## Logsene CLI Session
-We define L-CLI session as a set of commands issued by the user, with no more than 30m between them. 
-Every session has a set of configuration parameters that control the way L-CLI behaves. 
-E.g. which Sematext account is used (`--api-key`); which Logsene application is used (`--app-key`); 
-is tracing information going to be displayed (--trace). 
+We define L-CLI session as a set of commands issued by the user, with no more than 30m between them.
+Every session has a set of configuration parameters that control the way L-CLI behaves.
+E.g. which Sematext account is used (`--api-key`); which Logsene application is used (`--app-key`);
+is tracing information going to be displayed (--trace).
 
-or controlling those settings, we use `config set` and `config get` commands.
-For convenience reasons, you don't have to deal with API and APP keys manually. 
-L-CLI automatically retrieves both keys on each session start, 
+For controlling those settings, we use `config set` and `config get` commands.
+For convenience reasons, you don't have to deal with API and APP keys manually.
+L-CLI automatically retrieves both keys on each session start,
 as users login (`--api-key`) and choose Logsene application (`--app-key`).
-L-CLI then writes those parameters to the session configuration store and 
+L-CLI then writes those parameters to the session configuration store and
 reuses them on each subsequent command, until the session times out.
 
 ![Login image](http://i1329.photobucket.com/albums/w548/mbonaci/Sematext%20L-CLI%20README/login-new_zpsophwegzo.png)
 
-The session primitives were introduced in order to enable frictionless multi-user experience, 
-where all users may possibly be accessing L-CLI from the same box (while being SSHd into it), 
-using the same Sematext account and possibly even the same Logsene application, 
-L-CLI keeps each session alive for 30m. After the session times out, user needs to repeat the login process.
-
+The session primitives were introduced in order to enable frictionless multi-user experience, where all users may possibly be accessing L-CLI from the same box (while being SSHd into it), using the same Sematext account and possibly even the same Logsene application.
 
 ## Commands
 ### logsene search
