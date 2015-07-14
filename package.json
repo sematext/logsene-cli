@@ -1,6 +1,6 @@
 {
   "name": "logsene-cli",
-  "version": "1.0.8-alpha",
+  "version": "1.1.0",
   "description": "Logsene command-line interface",
   "main": "index.js",
   "preferGlobal": true,
@@ -18,7 +18,7 @@
     "sematext",
     "logsene"
   ],
-  "author": "Marko Bonaći",
+  "author": "Marko Bonaći <marko.bonaci@sematext.com> (https://github.com/mbonaci)",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/sematext/logsene-cli/issues"
@@ -34,14 +34,10 @@
     "cli-table": "^0.3.1",
     "colors": "^1.1.2",
     "configstore": "^1.0.0",
-    "debug": "^2.2.0",
     "elastic.js": "^1.2.0",
     "elasticsearch": "^4.1.0",
     "elasticsearch-streams": "0.0.9",
     "end-of-stream": "^1.1.0",
-    "generator-ronin": "^0.1.2",
-    "graceful-fs": "^3.0.8",
-    "hyperquest": "^1.2.0",
     "jsonist": "^1.0.2",
     "lodash.filter": "^3.1.1",
     "lodash.foreach": "^3.0.3",
@@ -53,8 +49,8 @@
     "lodash.values": "^3.0.0",
     "minimist": "^1.1.1",
     "moment": "^2.10.3",
-    "month-days": "^1.0.0",
     "osenv": "^0.1.1",
+    "request": "^2.58.0",
     "ronin": "^0.1.2",
     "safe-json-stringify": "^1.0.3",
     "simple-spinner": "0.0.3",
