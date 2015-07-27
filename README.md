@@ -36,6 +36,9 @@ A quick rundown of most notable features of Logsene:
   - Docker container monitoring
   - REST API
 
+## Shipping logs with node.js
+Our other project [logparser-js](https://github.com/sematext/logparser-js) can be used to parse and ship logs to Logsene, both from your JavaScript source or from the command line.
+
 ## Logsene CLI
 
 Logsene CLI gives you capability to search through your logs from the command-line, which brings the awesome benefit of being able to pipe results to `awk`, `sed`, `cut`, `sort`, `head` and friends from the *nix command-line.  
@@ -54,13 +57,13 @@ that announced the release of Logsene CLI.
 ## Logsene CLI Session
 We define L-CLI session as a set of commands issued by the user, with no more than 30m between them.
 Every session has a set of configuration parameters that control the way L-CLI behaves.
-E.g. which Sematext account is used (`--api-key`); which Logsene application is used (`--app-key`);
+E.g. which Sematext account is used (`--api-key`); which Logsene application is used (`--token`);
 is tracing information going to be displayed (--trace).
 
 For controlling those settings, we use `config set` and `config get` commands.
 For convenience reasons, you don't have to deal with API and APP keys manually.
 L-CLI automatically retrieves both keys on each session start,
-as users login (`--api-key`) and choose Logsene application (`--app-key`).
+as users login (`--api-key`) and choose Logsene application (`--token`).
 L-CLI then writes those parameters to the session configuration store and
 reuses them on each subsequent command, until the session times out.
 
@@ -239,19 +242,19 @@ Allowed "human" formats (all in local time):
 Usage: logsene config set [OPTIONS]
   where OPTIONS may be:
     --api-key <apiKey>
-    --app-key <appKey>
+    --token <appToken>
     --default-size <size>
     --range-separator <sep>
     --trace <true|false>
 
-It is not necessary to explicitly set api-key nor app-key.
+It is not necessary to explicitly set api-key nor token.
 Logsene CLI will ask you to log in and choose Logsene application
 if keys are missing from the configuration
 Examples:
   logsene config set --api-key 11111111-1111-1111-1111-111111111111
       sets the api key for the current session
 
-  logsene config set --app-key 22222222-2222-2222-2222-222222222222
+  logsene config set --token 22222222-2222-2222-2222-222222222222
       sets Logsene application key for the current session
 
   logsene config set --default-size 3000
@@ -273,7 +276,7 @@ Examples:
 ```
 Usage: logsene config get [OPTION]  Where OPTION may be:
     --api-key
-    --app-key
+    --token
     --app-name
     --default-size (sets the default number of hits returned for the current session)
     --range-separator (used to separate start and end of a time range)
