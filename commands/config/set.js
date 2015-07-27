@@ -33,7 +33,7 @@ var Set = Command.extend({ use: ['session', 'auth'],
     }
 
     if (isEmpty(argv['api-key'])
-        && isEmpty(argv['app-key'])
+        && isEmpty(argv['token'])
         && isEmpty(argv['default-size'])
         && isEmpty(argv['range-separator'])
         && isEmpty(argv['trace'])) {
@@ -64,19 +64,19 @@ var Set = Command.extend({ use: ['session', 'auth'],
     return 'Usage: logsene config set [OPTIONS]\n'.bold +
         '  where OPTIONS may be:\n'.grey +
         '    --api-key <apiKey>\n'.yellow +
-        '    --app-key <appKey>\n'.yellow +
+        '    --token <appKey>\n'.yellow +
         '    --default-size <size>\n'.yellow +
         '    --range-separator <sep>\n'.yellow +
         '    --trace <true|false>\n'.yellow +
         '\n' +
-        'It is not necessary to explicitly set api-key nor app-key.\n' +
+        'It is not necessary to explicitly set api-key nor token.\n' +
         'Logsene CLI will ask you to log in and choose Logsene application\n' +
         'if keys are missing from the configuration\n' +
         'Examples:\n'.underline.green +
         '  logsene config set --api-key 11111111-1111-1111-1111-111111111111\n'.blue +
         '      sets the api key for the current session\n'.grey +
         '\n' +
-        '  logsene config set --app-key 22222222-2222-2222-2222-222222222222\n'.blue +
+        '  logsene config set --token 22222222-2222-2222-2222-222222222222\n'.blue +
         '      sets Logsene application key for the current session\n'.grey +
         '\n' +
         '  logsene config set --default-size 3000\n'.blue +

@@ -59,7 +59,7 @@ var Get = Command.extend({ use: ['session', 'auth'],
     return 'Usage: logsene config get [OPTION]'.bold +
         '  Where OPTIONS may be:\n'.grey +
         '    --api-key\n'.yellow +
-        '    --app-key\n'.yellow +
+        '    --token\n'.yellow +
         '    --app-name\n'.yellow +
         '    --default-size\n'.yellow + ' (sets the default number of hits returned for the current session)\n'.grey+
         '    --range-separator'.yellow + ' (used to separate two datetimes when specifying time range)\n'.grey+

@@ -153,7 +153,7 @@ function verifyAppKey(apiKey, cb) {
 
       // keep only a subset of useful keys per each app
       var apps = map(logseneApps, function(a) {
-        return pick(a, ['token', 'name']);
+        return pick(a, ['app-key', 'name']);
       });
 
       out.trace('Picked only subset of app keys: ');
