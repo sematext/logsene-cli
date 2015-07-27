@@ -37,7 +37,7 @@ A quick rundown of most notable features of Logsene:
   - REST API
 
 ## Shipping logs with node.js
-Our other project [logparser-js](https://github.com/sematext/logparser-js) can be used to parse and ship logs to Logsene, both from your JavaScript source or from the command line.
+Our other project [logagent-js](https://github.com/sematext/logagent-js) can be used to parse and ship logs to Logsene, both from your JavaScript source or from the command line.
 
 ## Logsene CLI
 
