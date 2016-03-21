@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/sematext/logsene-cli.svg?branch=master)](https://travis-ci.org/sematext/logsene-cli)
+
 # Logsene CLI
 [Logsene](http://sematext.com/logsene) Command-line Interface  
 
