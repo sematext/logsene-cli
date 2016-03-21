@@ -82,7 +82,7 @@ Usage: logsene search [query] [OPTIONS]
     -q <query>      Query string (-q parameter can be omitted)
     -f <fields>     OPTIONAL Fields to return (defaults to all fields)
     -t <interval>   OPTIONAL datetime, duration or range (defaults to last hour)
-    -s <size>       OPTIONAL Number of matches to return (d)efaults to 200)
+    -s <size>       OPTIONAL Number of matches to return (defaults to 200)
     -o <offset>     OPTIONAL Number of matches to skip from the beginning (defaults to 0)
     -op AND         OPTIONAL Overrides default OR operator between multiple query terms
     --json          OPTIONAL Returns log entries in JSON instead of TSV format
