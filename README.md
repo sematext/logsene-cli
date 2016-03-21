@@ -41,11 +41,11 @@ Our other project [logagent-js](https://github.com/sematext/logagent-js) can be 
 
 ## Logsene CLI
 
-Logsene CLI gives you capability to search through your logs from the command-line, which brings the awesome benefit of being able to pipe results to `awk`, `sed`, `cut`, `sort`, `head` and friends from the *nix command-line.  
+Logsene CLI gives you capability to search through your logs from the command-line, which brings the awesome benefit of being able to pipe results to `awk`, `sed`, `cut`, `sort`, `head` and other friends from the *nix command-line.  
 
 Imagine a situation where you suspected that your site were under a DoS attack.  
 You'd be interested in quickly finding out the top offenders.
-Here’s a one-liner that shows top originating IP addresses in he last 10 minutes (also shows how to use the `-f` switch to specify which field(s) to return - field `host`, in this example):
+Here’s a one-liner that shows top originating IP addresses in the last 10 minutes (also shows how to use the `-f` switch to specify which field(s) to return - field `host`, in this example):
 
 `$ logsene search -t 10m -f host | sort | uniq -c | sort -r | head -n20`
 
@@ -55,10 +55,10 @@ You can find more useful examples in [the blog post](http://blog.sematext.com/20
 that announced the release of Logsene CLI.
 
 ## Logsene CLI Session
-We define L-CLI session as a set of commands issued by the user, with no more than 30m between them.
+We define L-CLI session as a set of commands issued by an user, with no more than 30m between them.
 Every session has a set of configuration parameters that control the way L-CLI behaves.
 E.g. which Sematext account is used (`--api-key`); which Logsene application is used (`--token`);
-is tracing information going to be displayed (--trace).
+is tracing information going to be displayed (`--trace`).
 
 For controlling those settings, we use `config set` and `config get` commands.
 For convenience reasons, you don't have to deal with API and APP keys manually.
