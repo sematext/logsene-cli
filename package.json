@@ -64,7 +64,7 @@
   "devDependencies": {
     "chai": "*",
     "generator-ronin": "^0.1.2",
-    "mocha": "*",
+    "mocha": "^3.2.0",
     "yo": ">=1.0.0"
   }
 }
