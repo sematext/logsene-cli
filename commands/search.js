@@ -1,6 +1,5 @@
 'use strict'
 /* jshint node:true */
-/* global module, process, console, require */
 
 // not ideal place, but circular dependency otherwise
 require('../lib/bootstrap') // throw away, just bootstrap
