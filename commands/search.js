@@ -100,13 +100,15 @@ var Search = Command.extend({ use: ['session', 'auth'],
         process.exit(1) // bail out
       }
 
-      var jsonExtractor = new Transform({objectMode: true}),
-        tsvExtractor = new Transform({objectMode: true}),
-        hitCnt = 0
+      var jsonExtractor = new Transform({objectMode: true})
+      var tsvExtractor = new Transform({objectMode: true})
+      var hitCnt = 0
 
       jsonExtractor._transform = function _jsonTransform (data, encoding, next) {
         var source = isDef(data['_source']) ? data['_source'] : data
-        if (data.fields) source = data.fields
+        if (data.fields) {
+          source = data.fields
+        }
         this.push(source)
         hitCnt++
         next()
@@ -114,13 +116,13 @@ var Search = Command.extend({ use: ['session', 'auth'],
 
       tsvExtractor._transform = function _tsvTransform (data, encoding, next) {
         var source = isDef(data['_source']) ? data['_source'] : data
-        if (data.fields) source = reshufleFields(data.fields)
+        if (data.fields) {
+          source = reshufleFields(data.fields)
+        }
         var output = ''
-
         forEach(values(source), function _forEachValue (v) {
           output += v + '\t'
         })
-
         this.push(output + '\n')
         hitCnt++ // counting objects = hits
         next()
@@ -419,9 +421,9 @@ var getTimeFilterSync = function _getTimeFilterSync () {
   // first check whether user provided the time component (-t)
   if (!argv.t) {
     // if -t is not specified, default time is the last 60m
-    var millisInHour = 3600000,
-      nowMinusHour = Date.now() - millisInHour,
-      defaultStartTime = (new Date(nowMinusHour)).toISOString()
+    var millisInHour = 3600000
+    var nowMinusHour = Date.now() - millisInHour
+    var defaultStartTime = (new Date(nowMinusHour)).toISOString()
 
     filter = ejs.RangeFilter('@timestamp').gte(defaultStartTime)
   } else {
@@ -439,15 +441,14 @@ var getTimeFilterSync = function _getTimeFilterSync () {
         'Disallowed chars: ' + disallowedChars.join(', ') + '' + nl +
         'e.g. logsene config set --sep TO', Search)
     }
-
+    var parsed = null
     try {
       // we get back {start: Date[, end: Date]} and that's all we care about
-      var parsed = parseTime(t, {separator: sep})
+      parsed = parseTime(t, {separator: sep})
     } catch (err) {
       out.error('DateTime parser: ' + err.message)
       process.exit(1)
     }
-
     if (parsed) {
       filter = ejs.RangeFilter('@timestamp').gte(parsed.start)
       if (isDef(parsed.end)) { // if range, add the 'end' condition to the filter
