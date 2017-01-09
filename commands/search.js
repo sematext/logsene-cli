@@ -1,76 +1,74 @@
-'use strict';
+'use strict'
 /* jshint node:true */
 /* global module, process, console, require */
 
 // not ideal place, but circular dependency otherwise
-require('../lib/bootstrap');  // throw away, just bootstrap
+require('../lib/bootstrap') // throw away, just bootstrap
 
-var Command         = require('ronin').Command,
-    ejs             = require('elastic.js'),
-    values          = require('lodash.values'),
-    forEach         = require('lodash.foreach'),
-    Transform       = require('stream').Transform,
-    JSONStream      = require('JSONStream'),
-    eos             = require('end-of-stream'),
-    Table           = require('cli-table'),
-    out             = require('../lib/util').out,
-    argv            = require('../lib/util').argv,
-    isDef           = require('../lib/util').isDef,
-    warnAndExit     = require('../lib/util').warnAndExit,
-    wrapInQuotes    = require('../lib/util').wrapInQuotes,
-    isSOBT          = require('../lib/util').isStrOrBoolTrue,
-    stringify       = require('../lib/util').safeJsonStringify,
-    parseTime       = require('../lib/time').parse,
-    disallowedChars = require('../lib/time').disallowedChars,
-    conf            = require('../lib/config'),
-    api             = require('../lib/logsene-api');
-    require('colors');  // just bring in colors
+var Command = require('ronin').Command
+var ejs = require('elastic.js')
+var values = require('lodash.values')
+var forEach = require('lodash.foreach')
+var Transform = require('stream').Transform
+var JSONStream = require('JSONStream')
+var eos = require('end-of-stream')
+var Table = require('cli-table')
+var out = require('../lib/util').out
+var argv = require('../lib/util').argv
+var isDef = require('../lib/util').isDef
+var warnAndExit = require('../lib/util').warnAndExit
+var wrapInQuotes = require('../lib/util').wrapInQuotes
+var isSOBT = require('../lib/util').isStrOrBoolTrue
+var stringify = require('../lib/util').safeJsonStringify
+var parseTime = require('../lib/time').parse
+var disallowedChars = require('../lib/time').disallowedChars
+var conf = require('../lib/config')
+var api = require('../lib/logsene-api')
+require('colors') // just bring in colors
 
-var nl = '\n';
-
+var nl = '\n'
 
 var Search = Command.extend({ use: ['session', 'auth'],
   desc: 'Search Logsene logs',
 
-  run: function _run() {
-    var logLev = isSOBT(conf.getSync('trace')) || isSOBT(argv.trace) ? 'trace' : 'error';
-    out.trace ('Initializing ES with log level ' + logLev);
-    api.initES(logLev);
+  run: function _run () {
+    var logLev = isSOBT(conf.getSync('trace')) || isSOBT(argv.trace) ? 'trace' : 'error'
+    out.trace('Initializing ES with log level ' + logLev)
+    api.initES(logLev)
 
-    out.trace('Search called with arguments: ' + stringify(argv));
+    out.trace('Search called with arguments: ' + stringify(argv))
 
     var opts = {
-      appKey:   conf.getSync('appKey'),
-      offset:   argv.o || 0,
+      appKey: conf.getSync('appKey'),
+      offset: argv.o || 0,
       logLevel: isSOBT(conf.getSync('trace')) ? 'trace' : 'error',
-      body:     ejs.Request()
-                  .query(ejs.FilteredQuery(getQuerySync(), getTimeFilterSync()))
-                  .sort('@timestamp', argv.sort || 'asc')
-    };
+      body: ejs.Request()
+        .query(ejs.FilteredQuery(getQuerySync(), getTimeFilterSync()))
+        .sort('@timestamp', argv.sort || 'asc')
+    }
 
     // size
-    var size = argv.s || conf.getSync('defaultSize') || conf.maxHits;
+    var size = argv.s || conf.getSync('defaultSize') || conf.maxHits
     if (!isSOBT(size)) {
-      opts.size = size;
+      opts.size = size
     }
 
     // fields
-    var f = argv.f;
-    var flds = [];  // remember so the order of fields in the printout can be honored
+    var f = argv.f
+    var flds = [] // remember so the order of fields in the printout can be honored
     if (f) {
-      if (f.indexOf(',') > -1) {  // multiple fields
+      if (f.indexOf(',') > -1) { // multiple fields
         // trim each in case of "fld1, fld2, fld3"
-        f.split(",").forEach(function(fld){
-          flds.push(fld.trim());
-        });
-        opts.body.fields(flds);
+        f.split(',').forEach(function (fld) {
+          flds.push(fld.trim())
+        })
+        opts.body.fields(flds)
       } else {
-        opts.body.fields(f);
+        opts.body.fields(f)
       }
     }
 
-
-    out.trace('Search: sending to logsene-api:' + nl + stringify(opts));
+    out.trace('Search: sending to logsene-api:' + nl + stringify(opts))
 
     /*
       "fields": {
@@ -84,97 +82,94 @@ var Search = Command.extend({ use: ['session', 'auth'],
     */
 
     // reorder fields as user requested (originally returned as object sorted by keys)
-    var reshufleFields = function _reshufleFields(fields) {
+    var reshufleFields = function _reshufleFields (fields) {
       if (Array.isArray(flds)) {
-        var reorderedFlds = [];
-        flds.forEach(function(fld) {
-          reorderedFlds.push(fields[fld]);
-        });
-        return reorderedFlds;
+        var reorderedFlds = []
+        flds.forEach(function (fld) {
+          reorderedFlds.push(fields[fld])
+        })
+        return reorderedFlds
       }
-      return fields;
-    };
+      return fields
+    }
 
     // logsene-api:
-    api.search(opts, function _apiSearch(err, esReadableHits) {
-      if(err) {
-        out.error('Search error: ' + err.message);
-        process.exit(1); // bail out
+    api.search(opts, function _apiSearch (err, esReadableHits) {
+      if (err) {
+        out.error('Search error: ' + err.message)
+        process.exit(1) // bail out
       }
 
       var jsonExtractor = new Transform({objectMode: true}),
-          tsvExtractor = new Transform({objectMode: true}),
-          hitCnt = 0;
+        tsvExtractor = new Transform({objectMode: true}),
+        hitCnt = 0
 
-      jsonExtractor._transform = function _jsonTransform(data, encoding, next) {
-        var source = isDef(data['_source']) ? data['_source'] : data;
-        if (data.fields) source = data.fields;
-        this.push(source);
-        hitCnt++;
-        next();
-      };
+      jsonExtractor._transform = function _jsonTransform (data, encoding, next) {
+        var source = isDef(data['_source']) ? data['_source'] : data
+        if (data.fields) source = data.fields
+        this.push(source)
+        hitCnt++
+        next()
+      }
 
-      tsvExtractor._transform = function _tsvTransform(data, encoding, next) {
-        var source = isDef(data['_source']) ? data['_source'] : data;
-        if (data.fields) source = reshufleFields(data.fields);
-        var output = '';
+      tsvExtractor._transform = function _tsvTransform (data, encoding, next) {
+        var source = isDef(data['_source']) ? data['_source'] : data
+        if (data.fields) source = reshufleFields(data.fields)
+        var output = ''
 
-        forEach(values(source), function _forEachValue(v) {
-          output += v + '\t';
-        });
+        forEach(values(source), function _forEachValue (v) {
+          output += v + '\t'
+        })
 
-        this.push(output + '\n');
-        hitCnt++;  // counting objects = hits
-        next();
-      };
+        this.push(output + '\n')
+        hitCnt++ // counting objects = hits
+        next()
+      }
 
-      eos(esReadableHits, function _esReadableHits(err) {
+      eos(esReadableHits, function _esReadableHits (err) {
         if (err) {
-          out.error('ES stream had an error or closed early.');
-          process.exit(1);
+          out.error('ES stream had an error or closed early.')
+          process.exit(1)
         }
 
         // only show when trace is turned on or there are no hits (messes up the ability to pipe output)
-        var maxHits = conf.maxHits;
+        var maxHits = conf.maxHits
         if (hitCnt === 0) {
-          out.info('\nReturned hits: ' + hitCnt + (hitCnt === maxHits ? ' (max)' : ''));
+          out.info('\nReturned hits: ' + hitCnt + (hitCnt === maxHits ? ' (max)' : ''))
         } else {
-          out.trace('\nReturned hits: ' + hitCnt + (hitCnt === maxHits ? ' (max)' : ''));
+          out.trace('\nReturned hits: ' + hitCnt + (hitCnt === maxHits ? ' (max)' : ''))
         }
-        process.exit(0);
-      });
-
+        process.exit(0)
+      })
 
       if (argv.json) {
         esReadableHits
-            .pipe(jsonExtractor)
-            .pipe(JSONStream.stringify(false))
-            .pipe(process.stdout);
-
+          .pipe(jsonExtractor)
+          .pipe(JSONStream.stringify(false))
+          .pipe(process.stdout)
       } else {
         esReadableHits
-            .pipe(tsvExtractor)
-            .pipe(process.stdout);
+          .pipe(tsvExtractor)
+          .pipe(process.stdout)
       }
-
-    });
+    })
   },
 
-  help: function _help() {
+  help: function _help () {
     var table = new Table({
       head: ['-t parameter', 'range start', 'range end']
-    });
+    })
 
     table.push(
-        ['2016-06-24T18:42',                      'timestamp',                    'now'                 ],
-        ['2016-06-24T18:42/2016-06-24T18:52:30',  'timestamp',                    'timestamp'           ],
-        ['2016-06-24T18:42/+1d',                  'timestamp',                    'timestamp + duration'],
-        ['2016-06-24T18:42/-1d',                  'timestamp - duration',         'timestamp'           ],
-        ['2h30m8s',                               'now - duration',               'now'                 ],
-        ['2h/+1h',                                'now - duration1',              'start + duration2'   ],
-        ['2h/-1h',                                'now - duration1 - duration2',  'now - duration1'     ],
-        ['5d10h25/2016-06-24T18:42',              'now - duration',               'timestamp'           ]
-    );
+      ['2016-06-24T18:42', 'timestamp', 'now'],
+      ['2016-06-24T18:42/2016-06-24T18:52:30', 'timestamp', 'timestamp'],
+      ['2016-06-24T18:42/+1d', 'timestamp', 'timestamp + duration'],
+      ['2016-06-24T18:42/-1d', 'timestamp - duration', 'timestamp'],
+      ['2h30m8s', 'now - duration', 'now'],
+      ['2h/+1h', 'now - duration1', 'start + duration2'],
+      ['2h/-1h', 'now - duration1 - duration2', 'now - duration1'],
+      ['5d10h25/2016-06-24T18:42', 'now - duration', 'timestamp']
+    )
 
     return 'Usage: logsene search [query] [OPTIONS]'.bold + nl +
     '  where OPTIONS may be:'.grey + nl +
@@ -319,10 +314,9 @@ var Search = Command.extend({ use: ['session', 'auth'],
     '  note: it is not possible to express duration with "human" format (e.g. "from 2 to 3 this morining")'.grey + nl +
     '  note: it is recommended to avoid human format, as it may yield unexpected results'.grey + nl +
     nl +
-    '--------';
+    '--------'
   }
-});
-
+})
 
 /**
  * Assembles ejs query according to query entered by the user
@@ -331,23 +325,21 @@ var Search = Command.extend({ use: ['session', 'auth'],
  * @returns assembled ejs query
  * @private
  */
-var getQuerySync = function _getQuery() {
-  var query;
+var getQuerySync = function _getQuery () {
+  var query
 
   if (!isDef(argv.q) && argv._.length === 1) {
     // if client just entered 'logsene search'
     // give him back ALL log entries (from the last hour - see getTimeSync)
-    query = ejs.MatchAllQuery();
-
+    query = ejs.MatchAllQuery()
   } else {
-    var q = adjustQuery();
-    query = ejs.QueryStringQuery().query(q).defaultOperator(getOperator());
+    var q = adjustQuery()
+    query = ejs.QueryStringQuery().query(q).defaultOperator(getOperator())
   }
 
-  out.trace('Returning query from getQuerySync:' + nl + stringify(query.toJSON()));
-  return query;
-};
-
+  out.trace('Returning query from getQuerySync:' + nl + stringify(query.toJSON()))
+  return query
+}
 
 /**
  *  Any number of params following -q is allowed and -q can be omitted
@@ -369,26 +361,25 @@ var getQuerySync = function _getQuery() {
  * @returns {*}
  * @private
  */
-var adjustQuery = function _adjustQuery() {
-  var q;
+var adjustQuery = function _adjustQuery () {
+  var q
 
   if (isDef(argv.q)) {
-    q = quoteIfPhrase(argv.q);
+    q = quoteIfPhrase(argv.q)
   }
 
-  if (argv._.length > 1) {  // not only search in _
+  if (argv._.length > 1) { // not only search in _
     // if there are additional search terms/phrases,
     // they were collected as commands by the minimist (see examples above)
     // append those puppies to q
-    forEach(argv._.splice(1), function _adjQ(str) {
-      q = (q ? q + ' ' : '') + quoteIfPhrase(str);
-    });
+    forEach(argv._.splice(1), function _adjQ (str) {
+      q = (q ? q + ' ' : '') + quoteIfPhrase(str)
+    })
   }
 
-  out.trace('adjustQuery: adjusted query to ' + q);
-  return q;
-};
-
+  out.trace('adjustQuery: adjusted query to ' + q)
+  return q
+}
 
 /**
  * Wraps string in double quotes if it contains space
@@ -396,10 +387,9 @@ var adjustQuery = function _adjustQuery() {
  * @returns {String} possibly quoted string
  * @private
  */
-var quoteIfPhrase = function _quoteIfPhrase(str) {
-  return str.toString().indexOf(' ') > -1 ? wrapInQuotes(str) : str;
-};
-
+var quoteIfPhrase = function _quoteIfPhrase (str) {
+  return str.toString().indexOf(' ') > -1 ? wrapInQuotes(str) : str
+}
 
 /**
  * Returns AND operator if explicitly specified by the user
@@ -407,15 +397,14 @@ var quoteIfPhrase = function _quoteIfPhrase(str) {
  * @returns {String} Operator
  * @private
  */
-var getOperator = function _getOperator() {
-  out.trace('isSOBT(argv.op): ' + isDef(argv.op));
+var getOperator = function _getOperator () {
+  out.trace('isSOBT(argv.op): ' + isDef(argv.op))
   if (argv.and || (isDef(argv.op) && argv.op.toLowerCase() === 'and')) {
-    return 'and';
+    return 'and'
   } else {
-    return 'or';
+    return 'or'
   }
-};
-
+}
 
 /**
  * Assembles ejs filter according to query entered by the user
@@ -424,57 +413,53 @@ var getOperator = function _getOperator() {
  * @returns assembled ejs filter
  * @private
  */
-var getTimeFilterSync = function _getTimeFilterSync() {
-  var filter;
+var getTimeFilterSync = function _getTimeFilterSync () {
+  var filter
 
   // first check whether user provided the time component (-t)
   if (!argv.t) {
     // if -t is not specified, default time is the last 60m
-    var millisInHour      = 3600000,
-        nowMinusHour      = Date.now() - millisInHour,
-        defaultStartTime  = (new Date(nowMinusHour)).toISOString();
+    var millisInHour = 3600000,
+      nowMinusHour = Date.now() - millisInHour,
+      defaultStartTime = (new Date(nowMinusHour)).toISOString()
 
-    filter = ejs.RangeFilter('@timestamp').gte(defaultStartTime);
-
+    filter = ejs.RangeFilter('@timestamp').gte(defaultStartTime)
   } else {
-
     // datetime param provided
-    var t = '' + argv.t,  // convert to string (if only digits: m = default)
-        sep = argv.sep || conf.getSync('rangeSeparator') || '/';
+    var t = '' + argv.t // convert to string (if only digits: m = default)
+    var sep = argv.sep || conf.getSync('rangeSeparator') || '/'
 
-    out.trace('Range separator for this session: ' + sep);
+    out.trace('Range separator for this session: ' + sep)
 
-    if (disallowedChars.indexOf(sep) > -1)
-      warnAndExit(sep + ' is not allowed as a range separator. That\'s because it' + nl +
-          'clashes with standard ISO 8601 datetime or duration notation' + nl +
-          'The default separator, forward slash, should be used.' + nl +
-          'It is also possible to use a custom separator (e.g. \' TO \').' + nl +
-          'Disallowed chars: ' + disallowedChars.join(', ') + '' + nl +
-          'e.g. logsene config set --sep TO', Search);
+    if (disallowedChars.indexOf(sep) > -1) {
+      warnAndExit(sep + " is not allowed as a range separator. That's because it" + nl +
+        'clashes with standard ISO 8601 datetime or duration notation' + nl +
+        'The default separator, forward slash, should be used.' + nl +
+        "It is also possible to use a custom separator (e.g. ' TO ')." + nl +
+        'Disallowed chars: ' + disallowedChars.join(', ') + '' + nl +
+        'e.g. logsene config set --sep TO', Search)
+    }
 
     try {
-
       // we get back {start: Date[, end: Date]} and that's all we care about
-      var parsed = parseTime(t, {separator: sep});
-
+      var parsed = parseTime(t, {separator: sep})
     } catch (err) {
-      out.error('DateTime parser: ' + err.message);
-      process.exit(1);
+      out.error('DateTime parser: ' + err.message)
+      process.exit(1)
     }
 
     if (parsed) {
-      filter = ejs.RangeFilter('@timestamp').gte(parsed.start);
-      if (isDef(parsed.end)) {  // if range, add the 'end' condition to the filter
-        filter = filter.lte(parsed.end);
+      filter = ejs.RangeFilter('@timestamp').gte(parsed.start)
+      if (isDef(parsed.end)) { // if range, add the 'end' condition to the filter
+        filter = filter.lte(parsed.end)
       }
     } else {
-      warnAndExit('Unrecognized datetime format.', Search);
+      warnAndExit('Unrecognized datetime format.', Search)
     }
   }
 
-  out.trace('getTimeFilterSync returning:' + nl + stringify(filter.toJSON()));
-  return filter;
-};
+  out.trace('getTimeFilterSync returning:' + nl + stringify(filter.toJSON()))
+  return filter
+}
 
-
-module.exports = Search;
+module.exports = Search
