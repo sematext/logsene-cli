@@ -1,6 +1,10 @@
 {
   "name": "logsene-cli",
+<<<<<<< HEAD
   "version": "1.4.4",
+=======
+  "version": "2.0.0",
+>>>>>>> Bump to 2.0.0
   "description": "Logsene command-line interface",
   "main": "index.js",
   "preferGlobal": true,
