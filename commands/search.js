@@ -454,7 +454,47 @@ var getTimeFilterSync = function _getTimeFilterSync () {
         filter = filter.lte(parsed.end)
       }
     } else {
-      warnAndExit('Unrecognized datetime format.', Search)
+      warnAndExit('Unrecognized datetime format.', Search);
+    }
+  }
+
+  out.trace('getTimeRangeSync returning:' + nl + stringify(range));
+  return range;
+};
+
+
+/**
+ * Assembles query object according to query entered by the user
+ * It checks whether user entered one or more terms or a phrase?
+ * It also checks whether the default operator, OR, is overridden
+ * @returns assembled query object
+ * @private
+ */
+var getQuerySync = function _getQuerySync(args) {
+  var query = {
+    query: {
+      bool: {
+        filter: {
+          range: getTimeRangeSync(args)
+        }
+      }
+    },
+    sort: [{
+      '@timestamp': args.sort || 'asc'
+    }]
+  };
+
+  if (!isDef(args.q) && args._.length === 1) {
+    // if client just entered 'logsene search'
+    // give him back ALL log entries (from the last hour)
+    return query;
+
+  } else {
+    query.query.bool.must = {
+      query_string: {
+        query: getQueryStringSync(args),
+        default_operator: getOperator(args)
+      }
     }
   }
 
