@@ -46,7 +46,7 @@ spinner.change_sequence(["◓", "◑", "◒", "◐"]);
 module.exports = function _auth(next) {
 
   // if the client is just turning tracing on, skip auth
-  if (argv._.set && argv.trace) {
+  if (argv._.indexOf('set') > -1 && argv.trace) {
     return setTimeout(next, 50);
   }
 

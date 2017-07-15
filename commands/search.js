@@ -6,7 +6,6 @@
 require('../lib/bootstrap');  // throw away, just bootstrap
 
 var Command         = require('ronin').Command,
-    ejs             = require('elastic.js'),
     values          = require('lodash.values'),
     forEach         = require('lodash.foreach'),
     Transform       = require('stream').Transform,
@@ -34,7 +33,7 @@ var Search = Command.extend({ use: ['session', 'auth'],
 
   run: function _run() {
     var logLev = isSOBT(conf.getSync('trace')) || isSOBT(argv.trace) ? 'trace' : 'error';
-    out.trace ('Initializing ES with log level ' + logLev);
+    out.trace('Initializing ES with log level ' + logLev);
     api.initES(logLev);
 
     out.trace('Search called with arguments: ' + stringify(argv));
@@ -43,9 +42,7 @@ var Search = Command.extend({ use: ['session', 'auth'],
       appKey:   conf.getSync('appKey'),
       offset:   argv.o || 0,
       logLevel: isSOBT(conf.getSync('trace')) ? 'trace' : 'error',
-      body:     ejs.Request()
-                  .query(ejs.FilteredQuery(getQuerySync(), getTimeFilterSync()))
-                  .sort('@timestamp', argv.sort || 'asc')
+      body:     getQuerySync(argv),
     };
 
     // size
@@ -69,19 +66,7 @@ var Search = Command.extend({ use: ['session', 'auth'],
       }
     }
 
-
     out.trace('Search: sending to logsene-api:' + nl + stringify(opts));
-
-    /*
-      "fields": {
-        "user_agent": [
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_3)"
-        ],
-        "host": [
-          "208.185.19.18"
-        ]
-      }
-    */
 
     // reorder fields as user requested (originally returned as object sorted by keys)
     var reshufleFields = function _reshufleFields(fields) {
@@ -323,32 +308,6 @@ var Search = Command.extend({ use: ['session', 'auth'],
   }
 });
 
-
-/**
- * Assembles ejs query according to query entered by the user
- * It checks whether user entered one or more terms or a phrase?
- * It also checks whether the default operator, OR, is overridden
- * @returns assembled ejs query
- * @private
- */
-var getQuerySync = function _getQuery() {
-  var query;
-
-  if (!isDef(argv.q) && argv._.length === 1) {
-    // if client just entered 'logsene search'
-    // give him back ALL log entries (from the last hour - see getTimeSync)
-    query = ejs.MatchAllQuery();
-
-  } else {
-    var q = adjustQuery();
-    query = ejs.QueryStringQuery().query(q).defaultOperator(getOperator());
-  }
-
-  out.trace('Returning query from getQuerySync:' + nl + stringify(query.toJSON()));
-  return query;
-};
-
-
 /**
  *  Any number of params following -q is allowed and -q can be omitted
  *  so we need to combine -q and commands for multi-term queries
@@ -369,23 +328,23 @@ var getQuerySync = function _getQuery() {
  * @returns {*}
  * @private
  */
-var adjustQuery = function _adjustQuery() {
+var getQueryStringSync = function _getQueryStringSync(args) {
   var q;
 
-  if (isDef(argv.q)) {
-    q = quoteIfPhrase(argv.q);
+  if (isDef(args.q)) {
+    q = quoteIfPhrase(args.q);
   }
 
-  if (argv._.length > 1) {  // not only search in _
+  if (args._.length > 1) {  // not only search in _
     // if there are additional search terms/phrases,
     // they were collected as commands by the minimist (see examples above)
     // append those puppies to q
-    forEach(argv._.splice(1), function _adjQ(str) {
+    forEach(args._.splice(1), function _adjQ(str) {
       q = (q ? q + ' ' : '') + quoteIfPhrase(str);
     });
   }
 
-  out.trace('adjustQuery: adjusted query to ' + q);
+  out.trace('getQueryStringSync query: ' + q);
   return q;
 };
 
@@ -407,40 +366,43 @@ var quoteIfPhrase = function _quoteIfPhrase(str) {
  * @returns {String} Operator
  * @private
  */
-var getOperator = function _getOperator() {
-  out.trace('isSOBT(argv.op): ' + isDef(argv.op));
-  if (argv.and || (isDef(argv.op) && argv.op.toLowerCase() === 'and')) {
-    return 'and';
+var getOperator = function _getOperator(args) {
+  out.trace('isSOBT(argv.op): ' + isDef(args.op));
+  if (args.and || (isDef(args.op) && args.op.toLowerCase() === 'and')) {
+    return 'AND';
   } else {
-    return 'or';
+    return 'OR';
   }
 };
 
 
 /**
- * Assembles ejs filter according to query entered by the user
+ * Assembles filter according to query entered by the user
  * It checks whether user expressed time component and, if yes,
  * composes the filter accordingly
- * @returns assembled ejs filter
+ * @returns assembled range filter
  * @private
  */
-var getTimeFilterSync = function _getTimeFilterSync() {
-  var filter;
+var getTimeRangeSync = function _getTimeRangeSync(args) {
+  var range = {
+    '@timestamp': {},
+    "_cache": false
+  };
 
   // first check whether user provided the time component (-t)
-  if (!argv.t) {
+  if (!args.t) {
     // if -t is not specified, default time is the last 60m
     var millisInHour      = 3600000,
         nowMinusHour      = Date.now() - millisInHour,
         defaultStartTime  = (new Date(nowMinusHour)).toISOString();
 
-    filter = ejs.RangeFilter('@timestamp').gte(defaultStartTime);
+    range['@timestamp'].gte = defaultStartTime;
 
   } else {
 
     // datetime param provided
-    var t = '' + argv.t,  // convert to string (if only digits: m = default)
-        sep = argv.sep || conf.getSync('rangeSeparator') || '/';
+    var t = '' + args.t,  // convert to string (if only digits: m = default)
+        sep = args.sep || conf.getSync('rangeSeparator') || '/';
 
     out.trace('Range separator for this session: ' + sep);
 
@@ -463,18 +425,59 @@ var getTimeFilterSync = function _getTimeFilterSync() {
     }
 
     if (parsed) {
-      filter = ejs.RangeFilter('@timestamp').gte(parsed.start);
-      if (isDef(parsed.end)) {  // if range, add the 'end' condition to the filter
-        filter = filter.lte(parsed.end);
+      range['@timestamp'].gte = parsed.start;
+      if (isDef(parsed.end)) {  // if range, add the 'end' condition to the range
+        range['@timestamp'].lt = parsed.end;
       }
     } else {
       warnAndExit('Unrecognized datetime format.', Search);
     }
   }
 
-  out.trace('getTimeFilterSync returning:' + nl + stringify(filter.toJSON()));
-  return filter;
+  out.trace('getTimeRangeSync returning:' + nl + stringify(range));
+  return range;
 };
 
+
+/**
+ * Assembles query object according to query entered by the user
+ * It checks whether user entered one or more terms or a phrase?
+ * It also checks whether the default operator, OR, is overridden
+ * @returns assembled query object
+ * @private
+ */
+var getQuerySync = function _getQuerySync(args) {
+  var query = {
+    query: {
+      bool: {
+        filter: {
+          range: getTimeRangeSync(args)
+        }
+      }
+    },
+    sort: [{
+      timestamp: {
+        '@timestamp': args.sort || 'asc'
+      }
+    }]
+  };
+
+  if (!isDef(args.q) && args._.length === 1) {
+    // if client just entered 'logsene search'
+    // give him back ALL log entries (from the last hour)
+    return query;
+
+  } else {
+    query.query.bool.must = {
+      query_string: {
+        query: getQueryStringSync(args),
+        default_operator: getOperator(args)
+      }
+    }
+  }
+
+  out.trace('Query about to be sent:' + nl + stringify(query));
+  return query;
+};
 
 module.exports = Search;
