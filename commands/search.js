@@ -456,9 +456,7 @@ var getQuerySync = function _getQuerySync(args) {
       }
     },
     sort: [{
-      timestamp: {
-        '@timestamp': args.sort || 'asc'
-      }
+      '@timestamp': args.sort || 'asc'
     }]
   };
 
