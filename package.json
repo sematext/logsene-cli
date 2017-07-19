@@ -1,6 +1,6 @@
 {
   "name": "logsene-cli",
-  "version": "1.4.1",
+  "version": "2.1.0",
   "description": "Logsene command-line interface",
   "main": "index.js",
   "preferGlobal": true,
