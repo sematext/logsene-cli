@@ -288,5 +288,7 @@ Usage: logsene config get [OPTION]  Where OPTION may be:
 
 
 # Changelog
+`2.2.0` - 2018-02-20
+  - apply `fields` param to `_source` (unlike previous `stored_fields` and `fields` param)
 `2.1.1` - 2018-02-20
   - fixed `fields` bug and adjusted param name (ES version compatibility: fields -> stored_fields)

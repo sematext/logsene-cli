@@ -59,7 +59,7 @@ var Search = Command.extend({ use: ['session', 'auth'],
       f.split(",").forEach(function(fld){
         flds.push(fld.trim());
       });
-      opts.body.stored_fields = flds;
+      opts.body._source = flds;
     }
 
     out.trace('Search: sending to logsene-api:' + nl + stringify(opts));
