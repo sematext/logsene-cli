@@ -55,15 +55,11 @@ var Search = Command.extend({ use: ['session', 'auth'],
     var f = argv.f;
     var flds = [];  // remember so the order of fields in the printout can be honored
     if (f) {
-      if (f.indexOf(',') > -1) {  // multiple fields
-        // trim each in case of "fld1, fld2, fld3"
-        f.split(",").forEach(function(fld){
-          flds.push(fld.trim());
-        });
-        opts.body.fields(flds);
-      } else {
-        opts.body.fields(f);
-      }
+      // trim each in case of "fld1, fld2, fld3"
+      f.split(",").forEach(function(fld){
+        flds.push(fld.trim());
+      });
+      opts.body.stored_fields = flds;
     }
 
     out.trace('Search: sending to logsene-api:' + nl + stringify(opts));

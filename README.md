@@ -24,7 +24,7 @@ To test, simply run:
 [Logsene](http://sematext.com/logsene) is a centralized log management solution. You basically upload your logs in bulk or real-time from all your servers. Those logs are then aggregated by time and shown in the Logsene web application,
 where you have the ability to search for specific terms, narrow down time ranges, filter fields, setup alerts, ...
 
-![Logsene Web APP](http://i1329.photobucket.com/albums/w548/mbonaci/Sematext%20L-CLI%20README/Logsene-web-app_zpsudvdspo4.png)
+![Logsene Web APP](http://i1329.photobucket.com/albums/w548/mbonaci/Sematext%20L-CLI%20README/https___apps_sematext_com_ui_logs_6977_0_zpstulqxbp2.png)
 
 A quick rundown of most notable features of Logsene:  
 
@@ -285,3 +285,8 @@ Usage: logsene config get [OPTION]  Where OPTION may be:
     --trace
     --all (return listing of all params from the current user's session)
 ```
+
+
+# Changelog
+`2.1.1` - 2018-02-20
+  - fixed `fields` bug and adjusted param name (ES version compatibility: fields -> stored_fields)
