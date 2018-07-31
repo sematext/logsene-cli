@@ -33,17 +33,22 @@ var Search = Command.extend({ use: ['session', 'auth'],
 
   run: function _run() {
     var logLev = isSOBT(conf.getSync('trace')) || isSOBT(argv.trace) ? 'trace' : 'error';
-    out.trace('Initializing ES with log level ' + logLev);
-    api.initES(logLev);
-
-    out.trace('Search called with arguments: ' + stringify(argv));
+    if (!conf.getSync('apiKey')) {
+      out.error('ApiKey is required to send queries to Logsene');
+    }
 
     var opts = {
       appKey:   conf.getSync('appKey'),
+      apiKey:   conf.getSync('apiKey'),
       offset:   argv.o || 0,
-      logLevel: isSOBT(conf.getSync('trace')) ? 'trace' : 'error',
+      logLevel: logLev,
       body:     getQuerySync(argv),
     };
+
+    out.trace('Initializing ES with log level ' + logLev);
+    api.initES(opts.logLevel, opts.apiKey);
+
+    out.trace('Search called with arguments: ' + stringify(argv));
 
     // size
     var size = argv.s || conf.getSync('defaultSize') || conf.maxHits;
