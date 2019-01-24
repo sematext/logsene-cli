@@ -143,7 +143,7 @@ function verifyAppKey(apiKey, cb) {
 
       // from now on, work only with active apps
       var activeApps = filter(logseneApps, function(app) {
-        return app.appStatus.toUpperCase() === 'ACTIVE';
+        return app.status.toUpperCase() === 'ACTIVE';
       });
 
       var activeAppsCnt = size(activeApps);
@@ -153,10 +153,10 @@ function verifyAppKey(apiKey, cb) {
 
       // keep only a subset of useful keys per each app
       var apps = map(logseneApps, function(a) {
-        return pick(a, ['app-key', 'name']);
+        return pick(a, ['token', 'name']);
       });
 
-      out.trace('Picked only subset of app keys: ');
+      out.trace('Picked only subset of app tokens: ');
       out.trace(stringify(apps));
 
 
