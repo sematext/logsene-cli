@@ -36,7 +36,6 @@ var Set = Command.extend({ use: ['session', 'auth'],
         && isEmpty(argv['token'])
         && isEmpty(argv['default-size'])
         && isEmpty(argv['range-separator'])
-        && isEmpty(argv['region'])
         && isEmpty(argv['trace'])) {
       warnAndExit('No known parameters specified.', this);
     }
@@ -67,7 +66,6 @@ var Set = Command.extend({ use: ['session', 'auth'],
         '    --api-key <apiKey>\n'.yellow +
         '    --token <appKey>\n'.yellow +
         '    --default-size <size>\n'.yellow +
-        '    --region <US|EU>\n'.yellow +
         '    --range-separator <sep>\n'.yellow +
         '    --trace <true|false>\n'.yellow +
         '\n' +
@@ -87,14 +85,10 @@ var Set = Command.extend({ use: ['session', 'auth'],
         '  logsene config set --range-separator TO\n'.blue +
         '      sets default separator of two datetimes for time ranges (default is /, as per ISO6801)\n'.grey +
         '\n' +
-        '  logsene config set --region EU\n'.blue +
-        '      used to set the AWS region to one where your user account and the Logsene app you' +
-        ' want to use was registered in (US is default)\n'.grey +
-        '\n' +
         '  logsene config set --trace false\n'.blue +
         '      deactivates tracing for the current session\n'.grey +
         '\n' +
-        '--------';
+        '--------\n';
   }
 });
 

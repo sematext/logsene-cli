@@ -46,7 +46,7 @@ var Search = Command.extend({ use: ['session', 'auth'],
     };
 
     out.trace('Initializing ES with log level ' + logLev);
-    api.initES(opts.logLevel, opts.apiKey);
+    api.initES(opts.logLevel, opts.apiKey, conf.getSync('region'));
 
     out.trace('Search called with arguments: ' + stringify(argv));
 
@@ -169,7 +169,6 @@ var Search = Command.extend({ use: ['session', 'auth'],
     '    -t <interval> '.yellow + '  OPTIONAL datetime, duration or range (defaults to last hour)' + nl +
     '    -s <size>     '.yellow + '  OPTIONAL Number of matches to return (d)efaults to ' + conf.maxHits + ')' + nl +
     '    -o <offset>   '.yellow + '  OPTIONAL Number of matches to skip from the beginning (defaults to 0)' + nl +
-    '    -r <region>   '.yellow + '  OPTIONAL Sets the AWS region (defaults to US)' + nl +
     '    -op AND       '.yellow + '  OPTIONAL Overrides default OR operator between multiple query terms' + nl +
     '    --json        '.yellow + '  OPTIONAL Returns log entries in JSON instead of TSV format' + nl +
     '    --sep         '.yellow + '  OPTIONAL Sets the separator between start and end of time ranges' + nl +

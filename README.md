@@ -283,6 +283,7 @@ Usage: logsene config get [OPTION]  Where OPTION may be:
     --default-size (sets the default number of hits returned for the current session)
     --range-separator (used to separate start and end of a time range)
     --trace
+    --region (which region has been set upon login - US or EU)
     --all (return listing of all params from the current user's session)
 ```
 
