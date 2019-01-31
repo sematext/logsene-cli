@@ -34,7 +34,7 @@
     "cli-table": "^0.3.1",
     "colors": "^1.1.2",
     "configstore": "^1.0.0",
-    "debug": "^2.6.8",
+    "debug": "^2.6.9",
     "elasticsearch": "^13.2.0",
     "elasticsearch-streams": "^0.0.9",
     "end-of-stream": "^1.4.0",
