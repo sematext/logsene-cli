@@ -18,6 +18,7 @@ var async             = require('async'),
     out               = require('../lib/util').out,
     isNullOrUndefined = require('../lib/util').isNullOrUndefined,
     conf              = require('../lib/config'),
+    reg               = require('../lib/region'),
     logsene           = require('../lib/logsene-api');
 
 /* We handle authentication framework-style: this function
@@ -192,25 +193,6 @@ function verifyAppKey(apiKey, cb) {
 
 
 /**
- * Return a valid region string for the input string, or null if it is invalid.
- *
- * @param {Function} cb
- * @api private
- */
-function getValidRegionString(region) {
-  switch (region) {
-    case 'EU':
-    case 'US':
-      return region;
-    case '': // empty string means default value => US
-      return 'US';
-    default:
-      return null;
-  }
-}
-
-
-/**
  * Asks the client for username and password
  * Retrieves api key of that user
  *
@@ -221,7 +203,7 @@ function getApiKeyWithCredentials(cb) {
   out.info('No active sessions. Please log in using your Sematext account:');
   ask('Enter your region, US or EU [US]: ', function _regionCb(errRegion, region) {
 
-    var validRegion = getValidRegionString(region);
+    var validRegion = reg.getValidRegionString(region);
     if (!validRegion) {
       out.warn('Unknown region \'' + stringify(region) + '\'! Try again.');
       process.exit(1);
