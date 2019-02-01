@@ -192,7 +192,7 @@ function verifyAppKey(apiKey, cb) {
 
 
 /**
- * Return a valid region string for the input string
+ * Return a valid region string for the input string, or null if it is invalid.
  *
  * @param {Function} cb
  * @api private
@@ -244,7 +244,7 @@ function getApiKeyWithCredentials(cb) {
                 );
               }
 
-              out.info('Successfuly logged in and retrieved API key.');
+              out.info('Successfully logged in and retrieved API key.');
               cb(null, key);
             })
 
