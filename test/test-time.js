@@ -127,8 +127,8 @@ describe('Time', function() {
     });
 
     it('durationX/+durationX should start durationX ago and end now (+/- tenth of a second)', function() {
-      var arg = '1y2M8d11h6m8s/+1y2M8d11h6m8s';
-      var start = moment().subtract(moment.duration({y: 1, M: 2, d: 8, h: 11, m: 6, s: 8}));
+      var arg = '1M8d11h6m8s/+1M8d11h6m8s';
+      var start = moment().subtract(moment.duration({M: 1, d: 8, h: 11, m: 6, s: 8}));
       var end = moment();
       var res = time.parse(arg);
       expect(res.start.valueOf()).to.be.closeTo(start.valueOf(), 100);
