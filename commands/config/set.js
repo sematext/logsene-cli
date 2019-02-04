@@ -70,14 +70,14 @@ var Set = Command.extend({ use: ['session', 'auth'],
         '    --trace <true|false>\n'.yellow +
         '\n' +
         'It is not necessary to explicitly set api-key nor token.\n' +
-        'Logsene CLI will ask you to log in and choose Logsene application\n' +
+        'Logsene CLI will ask you to log in and choose Logsene app\n' +
         'if keys are missing from the configuration\n' +
         'Examples:\n'.underline.green +
         '  logsene config set --api-key 11111111-1111-1111-1111-111111111111\n'.blue +
         '      sets the api key for the current session\n'.grey +
         '\n' +
         '  logsene config set --token 22222222-2222-2222-2222-222222222222\n'.blue +
-        '      sets Logsene application key for the current session\n'.grey +
+        '      sets Logsene app key for the current session\n'.grey +
         '\n' +
         '  logsene config set --default-size 3000\n'.blue +
         '      sets default number of hits returned for the current session (overrides the default 200)\n'.grey +
@@ -85,13 +85,10 @@ var Set = Command.extend({ use: ['session', 'auth'],
         '  logsene config set --range-separator TO\n'.blue +
         '      sets default separator of two datetimes for time ranges (default is /, as per ISO6801)\n'.grey +
         '\n' +
-        '  logsene config set --trace [true]\n'.blue +
-        '      activates tracing for the current session (true can be omitted)\n'.grey +
-        '\n' +
         '  logsene config set --trace false\n'.blue +
         '      deactivates tracing for the current session\n'.grey +
         '\n' +
-        '--------';
+        '--------\n';
   }
 });
 

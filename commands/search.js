@@ -46,7 +46,7 @@ var Search = Command.extend({ use: ['session', 'auth'],
     };
 
     out.trace('Initializing ES with log level ' + logLev);
-    api.initES(opts.logLevel, opts.apiKey);
+    api.initES(opts.logLevel, opts.apiKey, conf.getSync('region'));
 
     out.trace('Search called with arguments: ' + stringify(argv));
 

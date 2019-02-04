@@ -61,10 +61,11 @@ var Get = Command.extend({ use: ['session', 'auth'],
         '    --api-key\n'.yellow +
         '    --token\n'.yellow +
         '    --app-name\n'.yellow +
-        '    --default-size\n'.yellow + ' (sets the default number of hits returned for the current session)\n'.grey+
+        '    --default-size'.yellow + ' (the default number of hits returned for the current session)\n'.grey+
         '    --range-separator'.yellow + ' (used to separate two datetimes when specifying time range)\n'.grey+
+        '    --region'.yellow + ' (which Sematext region is used [US|EU])\n'.grey+
         '    --trace\n'.yellow +
-        '    --all'.yellow + ' (return listing of all params from the current user\'s session)\n\n'.grey;
+        '    --all'.yellow + ' (listing of all params from the current user\'s session)\n\n'.grey;
   }
 });
 

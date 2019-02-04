@@ -18,6 +18,7 @@ var async             = require('async'),
     out               = require('../lib/util').out,
     isNullOrUndefined = require('../lib/util').isNullOrUndefined,
     conf              = require('../lib/config'),
+    reg               = require('../lib/region'),
     logsene           = require('../lib/logsene-api');
 
 /* We handle authentication framework-style: this function
@@ -125,7 +126,7 @@ function verifyAppKey(apiKey, cb) {
     // if appKey is not in local config, ask the API server for all Logsene apps
     // then ask the user to choose if more than one app exists
     out.trace('calling getApps API');
-    getApps(apiKey, function(err, logseneApps) {
+    getApps(apiKey, conf.getSync('region'), function(err, logseneApps) {
       if (err) {
         out.error(err.message);
         out.error('Exiting');
@@ -143,7 +144,7 @@ function verifyAppKey(apiKey, cb) {
 
       // from now on, work only with active apps
       var activeApps = filter(logseneApps, function(app) {
-        return app.appStatus.toUpperCase() === 'ACTIVE';
+        return app.status.toUpperCase() === 'ACTIVE';
       });
 
       var activeAppsCnt = size(activeApps);
@@ -153,10 +154,10 @@ function verifyAppKey(apiKey, cb) {
 
       // keep only a subset of useful keys per each app
       var apps = map(logseneApps, function(a) {
-        return pick(a, ['app-key', 'name']);
+        return pick(a, ['token', 'name']);
       });
 
-      out.trace('Picked only subset of app keys: ');
+      out.trace('Picked only subset of app tokens: ');
       out.trace(stringify(apps));
 
 
@@ -200,39 +201,47 @@ function verifyAppKey(apiKey, cb) {
  */
 function getApiKeyWithCredentials(cb) {
   out.info('No active sessions. Please log in using your Sematext account:');
-  ask ('Enter your username: ', function _usernameCb(errUser, user) {
+  ask('Enter your region, US or EU [US]: ', function _regionCb(errRegion, region) {
 
-    if (!isEmpty(user)) {
-      conf.setSync('username', user);  // keep username around
-      ask('Enter your password: ', {hidden: true}, function _passCb(errPass, pass) {
-
-        if (!isEmpty(pass)) {
-          spinner.start();
-          logsene.login(user, pass, function _loginAPICb(errApi, key) {
-            spinner.stop();
-            if (errApi) {
-              out.error('Login was not successful' + stringify(errApi));
-              return cb(
-                new VError('Login was not successful. Possibly wrong username or password.', errApi)
-              );
-            }
-
-            out.info('Successfuly logged in and retrieved API key.');
-            cb(null, key);
-
-          })
-
-        } else {
-          out.warn('Password cannot be empty!. Try again');
-          //getApiKeyWithCredentials(cb);
-          process.exit(1);  // bail out, but stay quiet
-        }
-      });
-    } else {
-      out.warn('Username cannot be empty! Try again.');
-      //getApiKeyWithCredentials(cb);
+    var validRegion = reg.getValidRegionString(region);
+    if (!validRegion) {
+      out.warn('Unknown region \'' + stringify(region) + '\'! Try again.');
       process.exit(1);
     }
+    conf.setSync('region', validRegion);
+    ask ('Enter your username: ', function _usernameCb(errUser, user) {
+
+      if (!isEmpty(user)) {
+        conf.setSync('username', user);  // keep username around
+        ask('Enter your password: ', {hidden: true}, function _passCb(errPass, pass) {
+
+          if (!isEmpty(pass)) {
+            spinner.start();
+            logsene.login(user, pass, validRegion, function _loginAPICb(errApi, key) {
+              spinner.stop();
+              if (errApi) {
+                out.error('Login was not successful' + stringify(errApi));
+                return cb(
+                  new VError('Login was not successful. Possibly wrong username or password.', errApi)
+                );
+              }
+
+              out.info('Successfully logged in and retrieved API key.');
+              cb(null, key);
+            })
+
+          } else {
+            out.warn('Password cannot be empty! Try again.');
+            //getApiKeyWithCredentials(cb);
+            process.exit(1);  // bail out, but stay quiet
+          }
+        });
+      } else {
+        out.warn('Username cannot be empty! Try again.');
+        //getApiKeyWithCredentials(cb);
+        process.exit(1);
+      }
+    });
   });
 }
 
@@ -275,8 +284,8 @@ function chooseApp(apps, cb) {
  * @param cb - second param is Array of Logsene app objects
  * @private
  */
-function getApps(apiKey, cb) {
-  logsene.getApps(apiKey, function _getAppsCall(err, apps) {
+function getApps(apiKey, region, cb) {
+  logsene.getApps(apiKey, region, function _getAppsCall(err, apps) {
     if (err) return cb(new VError(err));
     return cb(null, apps);
   });
