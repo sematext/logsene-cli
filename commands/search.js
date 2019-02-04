@@ -386,8 +386,7 @@ var getOperator = function _getOperator(args) {
  */
 var getTimeRangeSync = function _getTimeRangeSync(args) {
   var range = {
-    '@timestamp': {},
-    "_cache": false
+    '@timestamp': {}
   };
 
   // first check whether user provided the time component (-t)
