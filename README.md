@@ -43,7 +43,7 @@ Our other project [logagent-js](https://github.com/sematext/logagent-js) can be 
 
 ## Logsene CLI
 
-Logsene CLI gives you capability to search through your logs from the command-line, which brings the awesome benefit of being able to pipe results to `awk`, `sed`, `cut`, `sort`, `head` and other friends from the *nix command-line.  
+Logsene CLI gives you capability to search through your logs from the command line, which brings the awesome benefit of being able to pipe results to `awk`, `sed`, `cut`, `sort`, `head` and other friends from the *nix command-line.  
 
 Imagine a situation where you suspected that your site were under a DoS attack.  
 You'd be interested in quickly finding out the top offenders.
@@ -59,15 +59,15 @@ that announced the release of Logsene CLI.
 ## Logsene CLI Session
 We define L-CLI session as a set of commands issued by an user, with no more than 30m between them.
 Every session has a set of configuration parameters that control the way L-CLI behaves.
-E.g. which Sematext account is used (`--api-key`); which Logsene application is used (`--token`);
+E.g. which Region is used, which Sematext account is used (`--api-key`); which Logsene application is used (`--token`);
 is tracing information going to be displayed (`--trace`).
 
 For controlling those settings, we use `config set` and `config get` commands.
 For convenience reasons, you don't have to deal with API and APP keys manually.
-L-CLI automatically retrieves both keys on each session start,
-as users login (`--api-key`) and choose Logsene application (`--token`).
+L-CLI automatically retrieves region and both api-key and token keys on each session start,
+as users login and choose Logsene application.
 L-CLI then writes those parameters to the session configuration store and
-reuses them on each subsequent command, until the session times out.
+reuses them on each subsequent command, until the session times out (after 30m of inactivity).
 
 ![Login image](http://i1329.photobucket.com/albums/w548/mbonaci/Sematext%20L-CLI%20README/login-new_zpsophwegzo.png)
 
@@ -283,12 +283,16 @@ Usage: logsene config get [OPTION]  Where OPTION may be:
     --default-size (sets the default number of hits returned for the current session)
     --range-separator (used to separate start and end of a time range)
     --trace
-    --region (which region has been set upon login - US or EU)
+    --region (which region has been set during login - US or EU)
     --all (return listing of all params from the current user's session)
 ```
 
 
 # Changelog
+`2.3.0` - 2019-02-05
+  - add `region` selection to login
+  - add http Authorization header for ES requests
+  - remove deprecated `_cache` ES search payload parameter
 `2.2.0` - 2018-02-20
   - apply `fields` param to `_source` (unlike previous `stored_fields` and `fields` param)
 `2.1.1` - 2018-02-20
