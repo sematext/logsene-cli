@@ -48,7 +48,7 @@
     "lodash.pick": "^4.4.0",
     "lodash.size": "^4.2.0",
     "lodash.values": "^4.3.0",
-    "minimist": "^1.2.2",
+    "minimist": "1.2.5",
     "moment": "^2.10.3",
     "osenv": "^0.1.4",
     "request": "^2.58.0",
